@@ -146,6 +146,11 @@ async function fetchQuizFromApi(
   const data = parseJsonResponse(text, res.status)
 
   if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error(
+        'Server vrátil 404 u /api/generate-quiz — funkce není na tomto nasazení dostupná. Ověř na Vercelu záložku Functions a že v repozitáři je api/generate-quiz.js (přegeneruje se při npm run build).'
+      )
+    }
     throw new Error(humanizeApiError(data, res.status))
   }
 
