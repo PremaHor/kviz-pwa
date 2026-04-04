@@ -1,5 +1,7 @@
 node_modules
 dist
+# esbuild výstup pro Vercel (generuje `npm run build` / `npm run build:api`)
+api/generate-quiz.js
 *.local
 .DS_Store
 

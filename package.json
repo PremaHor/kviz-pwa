@@ -7,9 +7,10 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev": "npx vercel dev",
+    "build:api": "node scripts/bundle-api.mjs",
+    "dev": "npm run build:api && npx vercel dev",
     "dev:vite": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run build:api && tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "@vercel/node": "^5.7.0",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
+    "esbuild": "^0.25.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
     "typescript": "~5.6.2",
