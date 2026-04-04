@@ -1,33 +1,26 @@
 import type { GeneratedQuiz, QuizConfiguration } from '@/types'
 import { enrichQuizWithMedia } from '@/services/mediaEnrichment'
+import { THEME_LABEL_CS, THEME_MEDIA_HINT_EN } from '@/lib/themeWizardOptions'
 
-/** Popisy témat jen pro text ukázkové otázky v mocku (nezdvojovat export z jádra). */
-const THEME_LABEL_MOCK: Record<QuizConfiguration['theme'], string> = {
-  seasonal: 'Sezónní (roční období, svátky, tradice v daném roce)',
-  animals: 'Zvířata a příroda',
-  general: 'Všeobecné znalosti',
-  science: 'Věda a technika',
-  pop_culture: 'Popkultura, film, hudba, seriály',
-}
+const THEME_LABEL_MOCK = THEME_LABEL_CS
+const MOCK_THEME_MEDIA_HINT = THEME_MEDIA_HINT_EN
 
-const MOCK_THEME_MEDIA_HINT: Record<QuizConfiguration['theme'], string> = {
-  seasonal: 'spring easter eggs flowers',
-  animals: 'red deer forest wildlife',
-  general: 'public library books reading',
-  science: 'chemistry beakers laboratory',
-  pop_culture: 'vinyl record microphone music',
+function mockQuizTitle(config: QuizConfiguration): string {
+  if (config.theme === 'random') {
+    return 'Kvíz — překvapení (ukázka — API neběží)'
+  }
+  if (config.theme === 'custom') {
+    const t = config.customThemeText.trim().slice(0, 36)
+    return t
+      ? `${t}${config.customThemeText.trim().length > 36 ? '…' : ''} (ukázka)`
+      : 'Vlastní téma (ukázka)'
+  }
+  return `${THEME_LABEL_CS[config.theme]} (ukázka — API neběží)`
 }
 
 function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
-  const themeTitle: Record<QuizConfiguration['theme'], string> = {
-    seasonal: 'Sezónní kvíz',
-    animals: 'Zvířata v přírodě',
-    general: 'Všeobecný kvíz',
-    science: 'Věda kolem nás',
-    pop_culture: 'Popkultura',
-  }
   return {
-    title: `${themeTitle[config.theme]} (ukázka — API neběží)`,
+    title: mockQuizTitle(config),
     questions: [
       {
         id: 'q1',
@@ -50,7 +43,11 @@ function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
         ],
         correctAnswerIndex: 0,
         mediaSearchHint: MOCK_THEME_MEDIA_HINT[config.theme],
-        explanation: `V konfiguraci je téma: ${THEME_LABEL_MOCK[config.theme]}.`,
+        explanation: `V konfiguraci je téma: ${
+          config.theme === 'custom'
+            ? config.customThemeText.trim() || 'vlastní (prázdné)'
+            : THEME_LABEL_MOCK[config.theme]
+        }.`,
       },
     ],
   }

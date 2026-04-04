@@ -3,16 +3,9 @@
  * Bez import.meta — vhodné pro Node (Vercel Function) i potenciální klienta.
  */
 import type { GeneratedQuiz, QuizConfiguration, QuizQuestion } from '../types'
+import { compactThemeSummary } from './themeWizardOptions'
 import { getQuestionCount } from './quizLength'
 import { buildPromptEnrichment } from '../services/promptBuilder'
-
-const THEME_CS: Record<QuizConfiguration['theme'], string> = {
-  seasonal: 'Sezónní (roční období, svátky, tradice v daném roce)',
-  animals: 'Zvířata a příroda',
-  general: 'Všeobecné znalosti',
-  science: 'Věda a technika',
-  pop_culture: 'Popkultura, film, hudba, seriály',
-}
 
 const CATEGORY_CS: Record<QuizConfiguration['category'], string> = {
   knowledge: 'Vědomostní — ověření faktů a znalostí',
@@ -78,7 +71,7 @@ Vytvoř jeden kvíz v češtině. Výstup musí přesně odpovídat JSON schéma
 
 Požadavky na obsah:
 - Přesně ${questionCount} otázek v poli "questions" — každá má jiné znění, žádné duplicity ani opakování stejného faktu.
-- Téma obsahu: ${THEME_CS[config.theme]}
+- Téma obsahu: ${compactThemeSummary(config)}
 - Styl: ${CATEGORY_CS[config.category]}
 - Cílová skupina: ${TARGET_CS[config.targetGroup]}
 - Přístupnost:

@@ -12,7 +12,26 @@ export type HandicapType =
 
 export type QuizCategory = 'knowledge' | 'educational' | 'fun' | 'competitive'
 
-export type QuizTheme = 'seasonal' | 'animals' | 'general' | 'science' | 'pop_culture'
+/** Téma kvízu — dynamicky podle publika + speciální volby. */
+export type QuizTheme =
+  | 'kid_seasonal'
+  | 'kid_animals'
+  | 'kid_fairy_tales_magic'
+  | 'kid_space_dinosaurs'
+  | 'jr_gaming_tech'
+  | 'jr_nature_science'
+  | 'jr_pop_culture'
+  | 'jr_fake_news_myths'
+  | 'ad_general'
+  | 'ad_travel_geography'
+  | 'ad_history_culture'
+  | 'ad_science_tech'
+  | 'sr_retro_6080'
+  | 'sr_golden_czech_hands'
+  | 'sr_nature_herbs'
+  | 'sr_history_local'
+  | 'random'
+  | 'custom'
 
 /** Délka kvízu — počet otázek určuje `getQuestionCount` v `lib/quizLength`. */
 export type QuizLength = 'short' | 'medium' | 'long'
@@ -22,6 +41,8 @@ export interface QuizConfiguration {
   handicaps: HandicapType[]
   category: QuizCategory
   theme: QuizTheme
+  /** Vyplní uživatel u volby „Vlastní téma“. */
+  customThemeText: string
   quizLength: QuizLength
 }
 

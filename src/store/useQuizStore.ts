@@ -7,7 +7,8 @@ const defaultConfig: QuizConfiguration = {
   targetGroup: 'adults',
   handicaps: ['none'],
   category: 'knowledge',
-  theme: 'general',
+  theme: 'ad_general',
+  customThemeText: '',
   quizLength: 'medium',
 }
 

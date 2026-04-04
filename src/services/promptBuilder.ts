@@ -36,6 +36,86 @@ function buildHandicapRulesBlock(handicaps: HandicapType[]): string {
   return lines.join('\n\n')
 }
 
+/**
+ * Konkrétní formáty otázek podle cílové skupiny a kategorie (mapování z průvodce).
+ * `competitive` má vlastní pravidla u juniorů a dospělých; u dětí jako zábavné; u seniorů v UI není — v promptu se bere jako vědomostní (fallback).
+ */
+function buildQuestionFormatBlock(config: QuizConfiguration): string {
+  const { targetGroup, category } = config
+
+  if (targetGroup === 'kids') {
+    if (category === 'fun' || category === 'competitive') {
+      return `FORMÁT OTÁZEK: Používej výhradně hádanky ('Kdo jsem?'), logické hry ('Co nepatří do party?') a vtipné absurdní situace (např. zvířata, která dělají lidské věci).`
+    }
+    if (category === 'educational') {
+      return `FORMÁT OTÁZEK: Zaměř se na objevování světa. Otázky typu 'Víš, že...?'. Do pole 'explanation' napiš velmi zajímavé a dětem srozumitelné vysvětlení.`
+    }
+    if (category === 'knowledge') {
+      return `FORMÁT OTÁZEK: Jednoduché testování základních znalostí (příroda, barvy, roční období, zvířata). Přímé a jasné otázky.`
+    }
+  }
+
+  if (targetGroup === 'juniors') {
+    if (category === 'competitive') {
+      return `FORMÁT OTÁZEK: Extrémně dynamický Kahoot styl. Otázky musí být úderné, stručné a týkat se moderního světa (technologie, gaming, virální trendy, záludnosti ze školy). Nesprávné odpovědi musí být 'chytáky', které otestují pozornost hráče. Zvyš pocit časového tlaku a soutěživosti.`
+    }
+    if (category === 'fun') {
+      return `FORMÁT OTÁZEK: Bizarní fakta z internetu, popkultura, gaming a otázky typu 'Pravda, nebo Fake News'.`
+    }
+    if (category === 'educational') {
+      return `FORMÁT OTÁZEK: Propojení učiva 2. stupně ZŠ s reálným světem. Např. 'Co by se stalo, kdyby...' (testování logiky). Vysvětlení musí být detailní.`
+    }
+    if (category === 'knowledge') {
+      return `FORMÁT OTÁZEK: Klasické kvízové otázky přiměřené věku, ale s moderním nádechem.`
+    }
+  }
+
+  if (targetGroup === 'adults') {
+    if (category === 'competitive') {
+      return `FORMÁT OTÁZEK: Finále drsného hospodského kvízu. Těžké, komplexní otázky, kde všechny 4 možnosti vypadají velmi pravděpodobně. Odpovědi mohou být založené na drobných detailech. Očekávej vysoký stres a soutěživost mezi hráči. Do pole 'explanation' přidej uštěpačný nebo mírně ironický komentář pro ty, co odpověděli špatně.`
+    }
+    if (category === 'fun') {
+      return `FORMÁT OTÁZEK: Hospodský kvíz. Chytáky, absurdní fakta z historie a otázky, kde první instinkt je většinou špatný.`
+    }
+    if (category === 'knowledge' || category === 'educational') {
+      return `FORMÁT OTÁZEK: Těžké otázky, hledání souvislostí ('Spojovačka'), přesná historická nebo vědecká fakta.`
+    }
+  }
+
+  if (targetGroup === 'seniors') {
+    if (category === 'knowledge' || category === 'competitive') {
+      return `FORMÁT OTÁZEK: Respektující vědomostní test ve stylu pořadu AZ Kvíz. Zaměř se na 'krystalizovanou inteligenci': československá historie 20. století, zeměpis, klasická literatura a významné osobnosti. Otázky musí být důstojné a bez chytáků.`
+    }
+    if (category === 'fun') {
+      return `FORMÁT OTÁZEK: Nostalgie a společné vzpomínání. Vytvářej otázky typu 'Stroj času' (ceny zboží a každodenní život v letech 1960-1980), doplňování textů známých lidových nebo populárních písní z té doby a doplňování českých přísloví.`
+    }
+    if (category === 'educational') {
+      return `FORMÁT OTÁZEK: Pojmi to jako jemný trénink paměti a objevování. Témata jako příroda, bylinkářství, tradiční recepty z babiččiny kuchařky nebo stará řemesla. Do pole 'explanation' napiš velmi laskavé a zajímavé doplnění kontextu k dané věci.`
+    }
+  }
+
+  return ''
+}
+
+function sanitizeCustomThemeForPrompt(raw: string): string {
+  return raw
+    .trim()
+    .slice(0, 500)
+    .replace(/'/g, '’')
+    .replace(/\s+/g, ' ')
+}
+
+export function buildThemeInstructionBlock(config: QuizConfiguration): string {
+  if (config.theme === 'random') {
+    return `TÉMA: Zvol zcela náhodné, fascinující a netradiční téma, které bude perfektně sedět pro cílovou skupinu. Název kvízu musí toto téma vystihovat.`
+  }
+  if (config.theme === 'custom') {
+    const t = sanitizeCustomThemeForPrompt(config.customThemeText)
+    return `TÉMA: Kvíz se musí striktně a do hloubky týkat tohoto vlastního tématu: '${t}'.`
+  }
+  return `TÉMA: Zaměř se na specifickou oblast: ${config.theme}.`
+}
+
 function buildWebInspirationBlock(config: QuizConfiguration): string {
   const base = WEB_INSPIRATION[config.targetGroup]
   const h = new Set(config.handicaps.filter((x) => x !== 'none'))
@@ -93,6 +173,17 @@ export function buildPromptEnrichment(config: QuizConfiguration): string {
   const parts: string[] = [
     '=== TÓN, PERSONA A ÚROVEŇ ===\n\n' + buildPersonaBlock(config),
   ]
+
+  const questionFormatBlock = buildQuestionFormatBlock(config)
+  if (questionFormatBlock) {
+    parts.push(
+      '=== FORMÁT OTÁZEK (STRUKTURA A TYP OTAZEK) ===\n\n' + questionFormatBlock
+    )
+  }
+
+  parts.push(
+    '=== TÉMA (OBSAHOVÝ ZÁMĚR) ===\n\n' + buildThemeInstructionBlock(config)
+  )
 
   const handicapBlock = buildHandicapRulesBlock(config.handicaps)
   if (handicapBlock) {

@@ -3,9 +3,12 @@ import type {
   QuizCategory,
   QuizConfiguration,
   QuizLength,
-  QuizTheme,
   TargetGroup,
 } from '../types'
+import {
+  ALL_QUIZ_THEMES,
+  normalizeIncomingThemeString,
+} from './themeWizardOptions'
 
 const TARGETS: TargetGroup[] = ['kids', 'juniors', 'adults', 'seniors']
 const HANDICAPS: HandicapType[] = [
@@ -46,13 +49,6 @@ const CATEGORIES: QuizCategory[] = [
   'fun',
   'competitive',
 ]
-const THEMES: QuizTheme[] = [
-  'seasonal',
-  'animals',
-  'general',
-  'science',
-  'pop_culture',
-]
 const LENGTHS: QuizLength[] = ['short', 'medium', 'long']
 
 function isString(v: unknown): v is string {
@@ -77,8 +73,27 @@ export function parseQuizConfigurationBody(raw: unknown): QuizConfiguration {
   if (!isString(category) || !CATEGORIES.includes(category as QuizCategory)) {
     throw new Error('Neplatná kategorie.')
   }
-  if (!isString(theme) || !THEMES.includes(theme as QuizTheme)) {
+  if (!isString(theme)) {
     throw new Error('Neplatné téma.')
+  }
+  const themeNorm = normalizeIncomingThemeString(theme)
+  if (!themeNorm || !ALL_QUIZ_THEMES.includes(themeNorm)) {
+    throw new Error('Neplatné téma.')
+  }
+
+  let customThemeText = ''
+  if (Object.prototype.hasOwnProperty.call(o, 'customThemeText')) {
+    const ct = o.customThemeText
+    if (ct != null && !isString(ct)) {
+      throw new Error('Neplatný text vlastního tématu.')
+    }
+    if (isString(ct)) {
+      customThemeText = ct.trim().slice(0, 500)
+    }
+  }
+
+  if (themeNorm === 'custom' && customThemeText.length < 3) {
+    throw new Error('Vlastní téma musí mít alespoň 3 znaky.')
   }
   if (!isString(quizLength) || !LENGTHS.includes(quizLength as QuizLength)) {
     throw new Error('Neplatná délka kvízu.')
@@ -108,7 +123,8 @@ export function parseQuizConfigurationBody(raw: unknown): QuizConfiguration {
     targetGroup: targetGroup as TargetGroup,
     handicaps,
     category: category as QuizCategory,
-    theme: theme as QuizTheme,
+    theme: themeNorm,
+    customThemeText,
     quizLength: quizLength as QuizLength,
   }
 }

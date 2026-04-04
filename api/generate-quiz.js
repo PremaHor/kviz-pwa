@@ -25,6 +25,106 @@ __export(generate_quiz_exports, {
 });
 module.exports = __toCommonJS(generate_quiz_exports);
 
+// src/lib/themeWizardOptions.ts
+var THEME_OPTIONS = {
+  kids: [
+    { value: "kid_seasonal", label: "Sez\xF3nn\xED" },
+    { value: "kid_animals", label: "Zv\xED\u0159ata" },
+    { value: "kid_fairy_tales_magic", label: "Poh\xE1dky a kouzla" },
+    { value: "kid_space_dinosaurs", label: "Vesm\xEDr a dinosau\u0159i" }
+  ],
+  juniors: [
+    { value: "jr_gaming_tech", label: "Gaming a technologie" },
+    { value: "jr_nature_science", label: "P\u0159\xEDroda a v\u011Bda" },
+    { value: "jr_pop_culture", label: "Popkultura" },
+    { value: "jr_fake_news_myths", label: "Fake News a m\xFDty" }
+  ],
+  adults: [
+    { value: "ad_general", label: "V\u0161eobecn\xE9" },
+    { value: "ad_travel_geography", label: "Cestov\xE1n\xED a geografie" },
+    { value: "ad_history_culture", label: "Historie a kultura" },
+    { value: "ad_science_tech", label: "V\u011Bda a technika" }
+  ],
+  seniors: [
+    { value: "sr_retro_6080", label: "Retro (60.\u201380. l\xE9ta)" },
+    { value: "sr_golden_czech_hands", label: "Zlat\xE9 \u010Desk\xE9 ru\u010Di\u010Dky" },
+    { value: "sr_nature_herbs", label: "P\u0159\xEDroda a bylinky" },
+    { value: "sr_history_local", label: "Historie a m\xEDstopis" }
+  ]
+};
+var ALL_QUIZ_THEMES = [
+  ...THEME_OPTIONS.kids.map((t) => t.value),
+  ...THEME_OPTIONS.juniors.map((t) => t.value),
+  ...THEME_OPTIONS.adults.map((t) => t.value),
+  ...THEME_OPTIONS.seniors.map((t) => t.value),
+  "random",
+  "custom"
+];
+var LEGACY_THEME_MAP = {
+  seasonal: "kid_seasonal",
+  animals: "kid_animals",
+  general: "ad_general",
+  science: "ad_science_tech",
+  pop_culture: "jr_pop_culture"
+};
+var THEME_LABEL_CS = {
+  kid_seasonal: "Sez\xF3nn\xED",
+  kid_animals: "Zv\xED\u0159ata",
+  kid_fairy_tales_magic: "Poh\xE1dky a kouzla",
+  kid_space_dinosaurs: "Vesm\xEDr a dinosau\u0159i",
+  jr_gaming_tech: "Gaming a technologie",
+  jr_nature_science: "P\u0159\xEDroda a v\u011Bda",
+  jr_pop_culture: "Popkultura",
+  jr_fake_news_myths: "Fake News a m\xFDty",
+  ad_general: "V\u0161eobecn\xE9",
+  ad_travel_geography: "Cestov\xE1n\xED a geografie",
+  ad_history_culture: "Historie a kultura",
+  ad_science_tech: "V\u011Bda a technika",
+  sr_retro_6080: "Retro (60.\u201380. l\xE9ta)",
+  sr_golden_czech_hands: "Zlat\xE9 \u010Desk\xE9 ru\u010Di\u010Dky",
+  sr_nature_herbs: "P\u0159\xEDroda a bylinky",
+  sr_history_local: "Historie a m\xEDstopis",
+  random: "P\u0159ekvap m\u011B!",
+  custom: "Vlastn\xED t\xE9ma"
+};
+function normalizeIncomingThemeString(raw) {
+  if (ALL_QUIZ_THEMES.includes(raw)) {
+    return raw;
+  }
+  const legacy = LEGACY_THEME_MAP[raw];
+  return legacy ?? null;
+}
+function compactThemeSummary(config2) {
+  if (config2.theme === "random") {
+    return "n\xE1hodn\xE9 t\xE9ma (viz detailn\xED instrukce v obohacen\xED promptu)";
+  }
+  if (config2.theme === "custom") {
+    const t = config2.customThemeText.trim();
+    return t.length > 0 ? t.slice(0, 120) : "vlastn\xED t\xE9ma (dopl\u0148 popis)";
+  }
+  return THEME_LABEL_CS[config2.theme];
+}
+var THEME_MEDIA_HINT_EN = {
+  kid_seasonal: "spring easter children holiday nature",
+  kid_animals: "cute animals wildlife forest",
+  kid_fairy_tales_magic: "fairy tale castle storybook magic",
+  kid_space_dinosaurs: "dinosaur planet space stars",
+  jr_gaming_tech: "video game controller esports technology",
+  jr_nature_science: "science experiment nature discovery",
+  jr_pop_culture: "cinema streaming music youth culture",
+  jr_fake_news_myths: "newspaper magnifying glass fact check",
+  ad_general: "books knowledge library culture",
+  ad_travel_geography: "world map travel landmark geography",
+  ad_history_culture: "historical building museum culture",
+  ad_science_tech: "science laboratory technology research",
+  sr_retro_6080: "vintage retro nostalgia czechoslovakia",
+  sr_golden_czech_hands: "cooking kitchen garden traditional crafts",
+  sr_nature_herbs: "herbs medicinal plants garden",
+  sr_history_local: "czech town landscape regional history",
+  random: "educational quiz diverse topics",
+  custom: "general knowledge topic illustration"
+};
+
 // src/lib/quizLength.ts
 var QUESTION_COUNT_BY_LENGTH = {
   short: 15,
@@ -53,6 +153,70 @@ var WEB_INSPIRATION = {
 function buildHandicapRulesBlock(handicaps) {
   const lines = handicaps.filter((h) => h !== "none").map((h) => HANDICAP_RULES[h]).filter((x) => Boolean(x));
   return lines.join("\n\n");
+}
+function buildQuestionFormatBlock(config2) {
+  const { targetGroup, category } = config2;
+  if (targetGroup === "kids") {
+    if (category === "fun" || category === "competitive") {
+      return `FORM\xC1T OT\xC1ZEK: Pou\u017E\xEDvej v\xFDhradn\u011B h\xE1danky ('Kdo jsem?'), logick\xE9 hry ('Co nepat\u0159\xED do party?') a vtipn\xE9 absurdn\xED situace (nap\u0159. zv\xED\u0159ata, kter\xE1 d\u011Blaj\xED lidsk\xE9 v\u011Bci).`;
+    }
+    if (category === "educational") {
+      return `FORM\xC1T OT\xC1ZEK: Zam\u011B\u0159 se na objevov\xE1n\xED sv\u011Bta. Ot\xE1zky typu 'V\xED\u0161, \u017Ee...?'. Do pole 'explanation' napi\u0161 velmi zaj\xEDmav\xE9 a d\u011Btem srozumiteln\xE9 vysv\u011Btlen\xED.`;
+    }
+    if (category === "knowledge") {
+      return `FORM\xC1T OT\xC1ZEK: Jednoduch\xE9 testov\xE1n\xED z\xE1kladn\xEDch znalost\xED (p\u0159\xEDroda, barvy, ro\u010Dn\xED obdob\xED, zv\xED\u0159ata). P\u0159\xEDm\xE9 a jasn\xE9 ot\xE1zky.`;
+    }
+  }
+  if (targetGroup === "juniors") {
+    if (category === "competitive") {
+      return `FORM\xC1T OT\xC1ZEK: Extr\xE9mn\u011B dynamick\xFD Kahoot styl. Ot\xE1zky mus\xED b\xFDt \xFAdern\xE9, stru\u010Dn\xE9 a t\xFDkat se modern\xEDho sv\u011Bta (technologie, gaming, vir\xE1ln\xED trendy, z\xE1ludnosti ze \u0161koly). Nespr\xE1vn\xE9 odpov\u011Bdi mus\xED b\xFDt 'chyt\xE1ky', kter\xE9 otestuj\xED pozornost hr\xE1\u010De. Zvy\u0161 pocit \u010Dasov\xE9ho tlaku a sout\u011B\u017Eivosti.`;
+    }
+    if (category === "fun") {
+      return `FORM\xC1T OT\xC1ZEK: Bizarn\xED fakta z internetu, popkultura, gaming a ot\xE1zky typu 'Pravda, nebo Fake News'.`;
+    }
+    if (category === "educational") {
+      return `FORM\xC1T OT\xC1ZEK: Propojen\xED u\u010Diva 2. stupn\u011B Z\u0160 s re\xE1ln\xFDm sv\u011Btem. Nap\u0159. 'Co by se stalo, kdyby...' (testov\xE1n\xED logiky). Vysv\u011Btlen\xED mus\xED b\xFDt detailn\xED.`;
+    }
+    if (category === "knowledge") {
+      return `FORM\xC1T OT\xC1ZEK: Klasick\xE9 kv\xEDzov\xE9 ot\xE1zky p\u0159im\u011B\u0159en\xE9 v\u011Bku, ale s modern\xEDm n\xE1dechem.`;
+    }
+  }
+  if (targetGroup === "adults") {
+    if (category === "competitive") {
+      return `FORM\xC1T OT\xC1ZEK: Fin\xE1le drsn\xE9ho hospodsk\xE9ho kv\xEDzu. T\u011B\u017Ek\xE9, komplexn\xED ot\xE1zky, kde v\u0161echny 4 mo\u017Enosti vypadaj\xED velmi pravd\u011Bpodobn\u011B. Odpov\u011Bdi mohou b\xFDt zalo\u017Een\xE9 na drobn\xFDch detailech. O\u010Dek\xE1vej vysok\xFD stres a sout\u011B\u017Eivost mezi hr\xE1\u010Di. Do pole 'explanation' p\u0159idej u\u0161t\u011Bpa\u010Dn\xFD nebo m\xEDrn\u011B ironick\xFD koment\xE1\u0159 pro ty, co odpov\u011Bd\u011Bli \u0161patn\u011B.`;
+    }
+    if (category === "fun") {
+      return `FORM\xC1T OT\xC1ZEK: Hospodsk\xFD kv\xEDz. Chyt\xE1ky, absurdn\xED fakta z historie a ot\xE1zky, kde prvn\xED instinkt je v\u011Bt\u0161inou \u0161patn\xFD.`;
+    }
+    if (category === "knowledge" || category === "educational") {
+      return `FORM\xC1T OT\xC1ZEK: T\u011B\u017Ek\xE9 ot\xE1zky, hled\xE1n\xED souvislost\xED ('Spojova\u010Dka'), p\u0159esn\xE1 historick\xE1 nebo v\u011Bdeck\xE1 fakta.`;
+    }
+  }
+  if (targetGroup === "seniors") {
+    if (category === "knowledge" || category === "competitive") {
+      return `FORM\xC1T OT\xC1ZEK: Respektuj\xEDc\xED v\u011Bdomostn\xED test ve stylu po\u0159adu AZ Kv\xEDz. Zam\u011B\u0159 se na 'krystalizovanou inteligenci': \u010Deskoslovensk\xE1 historie 20. stolet\xED, zem\u011Bpis, klasick\xE1 literatura a v\xFDznamn\xE9 osobnosti. Ot\xE1zky mus\xED b\xFDt d\u016Fstojn\xE9 a bez chyt\xE1k\u016F.`;
+    }
+    if (category === "fun") {
+      return `FORM\xC1T OT\xC1ZEK: Nostalgie a spole\u010Dn\xE9 vzpom\xEDn\xE1n\xED. Vytv\xE1\u0159ej ot\xE1zky typu 'Stroj \u010Dasu' (ceny zbo\u017E\xED a ka\u017Edodenn\xED \u017Eivot v letech 1960-1980), dopl\u0148ov\xE1n\xED text\u016F zn\xE1m\xFDch lidov\xFDch nebo popul\xE1rn\xEDch p\xEDsn\xED z t\xE9 doby a dopl\u0148ov\xE1n\xED \u010Desk\xFDch p\u0159\xEDslov\xED.`;
+    }
+    if (category === "educational") {
+      return `FORM\xC1T OT\xC1ZEK: Pojmi to jako jemn\xFD tr\xE9nink pam\u011Bti a objevov\xE1n\xED. T\xE9mata jako p\u0159\xEDroda, bylink\xE1\u0159stv\xED, tradi\u010Dn\xED recepty z babi\u010D\u010Diny kucha\u0159ky nebo star\xE1 \u0159emesla. Do pole 'explanation' napi\u0161 velmi laskav\xE9 a zaj\xEDmav\xE9 dopln\u011Bn\xED kontextu k dan\xE9 v\u011Bci.`;
+    }
+  }
+  return "";
+}
+function sanitizeCustomThemeForPrompt(raw) {
+  return raw.trim().slice(0, 500).replace(/'/g, "\u2019").replace(/\s+/g, " ");
+}
+function buildThemeInstructionBlock(config2) {
+  if (config2.theme === "random") {
+    return `T\xC9MA: Zvol zcela n\xE1hodn\xE9, fascinuj\xEDc\xED a netradi\u010Dn\xED t\xE9ma, kter\xE9 bude perfektn\u011B sed\u011Bt pro c\xEDlovou skupinu. N\xE1zev kv\xEDzu mus\xED toto t\xE9ma vystihovat.`;
+  }
+  if (config2.theme === "custom") {
+    const t = sanitizeCustomThemeForPrompt(config2.customThemeText);
+    return `T\xC9MA: Kv\xEDz se mus\xED striktn\u011B a do hloubky t\xFDkat tohoto vlastn\xEDho t\xE9matu: '${t}'.`;
+  }
+  return `T\xC9MA: Zam\u011B\u0159 se na specifickou oblast: ${config2.theme}.`;
 }
 function buildWebInspirationBlock(config2) {
   const base = WEB_INSPIRATION[config2.targetGroup];
@@ -97,6 +261,15 @@ function buildPromptEnrichment(config2) {
   const parts = [
     "=== T\xD3N, PERSONA A \xDAROVE\u0147 ===\n\n" + buildPersonaBlock(config2)
   ];
+  const questionFormatBlock = buildQuestionFormatBlock(config2);
+  if (questionFormatBlock) {
+    parts.push(
+      "=== FORM\xC1T OT\xC1ZEK (STRUKTURA A TYP OTAZEK) ===\n\n" + questionFormatBlock
+    );
+  }
+  parts.push(
+    "=== T\xC9MA (OBSAHOV\xDD Z\xC1M\u011AR) ===\n\n" + buildThemeInstructionBlock(config2)
+  );
   const handicapBlock = buildHandicapRulesBlock(config2.handicaps);
   if (handicapBlock) {
     parts.push("=== PRAVIDLA P\u0158\xCDSTUPNOSTI (OBSAH OTAZEK) ===\n\n" + handicapBlock);
@@ -106,13 +279,6 @@ function buildPromptEnrichment(config2) {
 }
 
 // src/lib/generateQuizCore.ts
-var THEME_CS = {
-  seasonal: "Sez\xF3nn\xED (ro\u010Dn\xED obdob\xED, sv\xE1tky, tradice v dan\xE9m roce)",
-  animals: "Zv\xED\u0159ata a p\u0159\xEDroda",
-  general: "V\u0161eobecn\xE9 znalosti",
-  science: "V\u011Bda a technika",
-  pop_culture: "Popkultura, film, hudba, seri\xE1ly"
-};
 var CATEGORY_CS = {
   knowledge: "V\u011Bdomostn\xED \u2014 ov\u011B\u0159en\xED fakt\u016F a znalost\xED",
   educational: "V\xFDukov\xE9 \u2014 vysv\u011Btlen\xED pojm\u016F, nau\u010Dn\xFD t\xF3n",
@@ -174,7 +340,7 @@ Vytvo\u0159 jeden kv\xEDz v \u010De\u0161tin\u011B. V\xFDstup mus\xED p\u0159esn
 
 Po\u017Eadavky na obsah:
 - P\u0159esn\u011B ${questionCount} ot\xE1zek v poli "questions" \u2014 ka\u017Ed\xE1 m\xE1 jin\xE9 zn\u011Bn\xED, \u017E\xE1dn\xE9 duplicity ani opakov\xE1n\xED stejn\xE9ho faktu.
-- T\xE9ma obsahu: ${THEME_CS[config2.theme]}
+- T\xE9ma obsahu: ${compactThemeSummary(config2)}
 - Styl: ${CATEGORY_CS[config2.category]}
 - C\xEDlov\xE1 skupina: ${TARGET_CS[config2.targetGroup]}
 - P\u0159\xEDstupnost:
@@ -402,13 +568,6 @@ var CATEGORIES = [
   "fun",
   "competitive"
 ];
-var THEMES = [
-  "seasonal",
-  "animals",
-  "general",
-  "science",
-  "pop_culture"
-];
 var LENGTHS = ["short", "medium", "long"];
 function isString(v) {
   return typeof v === "string";
@@ -428,8 +587,25 @@ function parseQuizConfigurationBody(raw) {
   if (!isString(category) || !CATEGORIES.includes(category)) {
     throw new Error("Neplatn\xE1 kategorie.");
   }
-  if (!isString(theme) || !THEMES.includes(theme)) {
+  if (!isString(theme)) {
     throw new Error("Neplatn\xE9 t\xE9ma.");
+  }
+  const themeNorm = normalizeIncomingThemeString(theme);
+  if (!themeNorm || !ALL_QUIZ_THEMES.includes(themeNorm)) {
+    throw new Error("Neplatn\xE9 t\xE9ma.");
+  }
+  let customThemeText = "";
+  if (Object.prototype.hasOwnProperty.call(o, "customThemeText")) {
+    const ct = o.customThemeText;
+    if (ct != null && !isString(ct)) {
+      throw new Error("Neplatn\xFD text vlastn\xEDho t\xE9matu.");
+    }
+    if (isString(ct)) {
+      customThemeText = ct.trim().slice(0, 500);
+    }
+  }
+  if (themeNorm === "custom" && customThemeText.length < 3) {
+    throw new Error("Vlastn\xED t\xE9ma mus\xED m\xEDt alespo\u0148 3 znaky.");
   }
   if (!isString(quizLength) || !LENGTHS.includes(quizLength)) {
     throw new Error("Neplatn\xE1 d\xE9lka kv\xEDzu.");
@@ -456,7 +632,8 @@ function parseQuizConfigurationBody(raw) {
     targetGroup,
     handicaps,
     category,
-    theme,
+    theme: themeNorm,
+    customThemeText,
     quizLength
   };
 }
@@ -464,13 +641,7 @@ function parseQuizConfigurationBody(raw) {
 // src/services/mediaEnrichment.ts
 var import_meta = {};
 var COMMONS_API = "https://commons.wikimedia.org/w/api.php";
-var THEME_FALLBACK_EN = {
-  seasonal: "season holiday nature",
-  animals: "wild animals nature",
-  general: "landmark culture",
-  science: "science laboratory nature",
-  pop_culture: "cinema music concert"
-};
+var THEME_FALLBACK_EN = THEME_MEDIA_HINT_EN;
 var STOP_WORDS = /* @__PURE__ */ new Set([
   "jak",
   "co",

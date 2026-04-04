@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import type { LucideIcon } from 'lucide-react'
 import {
   AlertCircle,
   ArrowLeft,
@@ -8,18 +9,29 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Clapperboard,
+  Dices,
+  FlaskConical,
   Gamepad2,
+  Globe2,
   GraduationCap,
+  Hammer,
+  Landmark,
   LayoutList,
   Leaf,
   List,
   ListOrdered,
+  Map,
+  Microscope,
   PartyPopper,
+  Rocket,
+  ShieldAlert,
   Sparkles,
   Sun,
   Trophy,
   User,
   Users,
+  Wand2,
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -33,6 +45,33 @@ import {
 } from '@/lib/accessibilityUi'
 import { getQuestionCount, quizLengthChoices } from '@/lib/quizLength'
 import { allowedCategories, allowedThemes } from '@/lib/wizardOptions'
+import {
+  defaultThemeForAudience,
+  SPECIAL_THEME_CARDS,
+  THEME_LABEL_CS,
+  THEME_OPTIONS,
+} from '@/lib/themeWizardOptions'
+
+const THEME_STEP_ICONS: Record<QuizTheme, LucideIcon> = {
+  kid_seasonal: Sun,
+  kid_animals: Leaf,
+  kid_fairy_tales_magic: Sparkles,
+  kid_space_dinosaurs: Rocket,
+  jr_gaming_tech: Gamepad2,
+  jr_nature_science: FlaskConical,
+  jr_pop_culture: Clapperboard,
+  jr_fake_news_myths: ShieldAlert,
+  ad_general: BookOpen,
+  ad_travel_geography: Globe2,
+  ad_history_culture: Landmark,
+  ad_science_tech: Microscope,
+  sr_retro_6080: Sun,
+  sr_golden_czech_hands: Hammer,
+  sr_nature_herbs: Leaf,
+  sr_history_local: Map,
+  random: Dices,
+  custom: Wand2,
+}
 import type {
   HandicapType,
   QuizCategory,
@@ -72,14 +111,6 @@ const categoryOptions: { value: QuizCategory; label: string; icon: typeof BookOp
     { value: 'competitive', label: 'Soutěžní', icon: Trophy },
   ]
 
-const themeOptions: { value: QuizTheme; label: string; icon: typeof Leaf }[] = [
-  { value: 'seasonal', label: 'Sezónní', icon: Sun },
-  { value: 'animals', label: 'Zvířata', icon: Leaf },
-  { value: 'general', label: 'Všeobecné', icon: BookOpen },
-  { value: 'science', label: 'Věda', icon: Sparkles },
-  { value: 'pop_culture', label: 'Popkultura', icon: Gamepad2 },
-]
-
 function toggleAdvancedHandicap(
   current: HandicapType[],
   value: RealHandicap
@@ -114,14 +145,6 @@ const labelCategory: Record<QuizCategory, string> = {
   educational: 'Výukové',
   fun: 'Zábavné',
   competitive: 'Soutěžní',
-}
-
-const labelTheme: Record<QuizTheme, string> = {
-  seasonal: 'Sezónní',
-  animals: 'Zvířata',
-  general: 'Všeobecné',
-  science: 'Věda',
-  pop_culture: 'Popkultura',
 }
 
 const lengthIcons: Record<QuizLength, typeof List> = {
@@ -162,12 +185,17 @@ export function Wizard() {
   useEffect(() => {
     const cats = allowedCategories(config.targetGroup, config.handicaps)
     const themes = allowedThemes(config.targetGroup, config.handicaps)
-    const patch: Partial<{ category: QuizCategory; theme: QuizTheme }> = {}
+    const patch: Partial<{
+      category: QuizCategory
+      theme: QuizTheme
+      customThemeText: string
+    }> = {}
     if (!cats.includes(config.category)) {
       patch.category = cats[0]
     }
     if (!themes.includes(config.theme)) {
-      patch.theme = themes[0]
+      patch.theme = defaultThemeForAudience(config.targetGroup)
+      patch.customThemeText = ''
     }
     if (Object.keys(patch).length > 0) {
       setConfig(patch)
@@ -188,12 +216,32 @@ export function Wizard() {
     [config.targetGroup, config.handicaps]
   )
 
-  const themeChoices = useMemo(
-    () =>
-      themeOptions.filter((o) =>
-        allowedThemes(config.targetGroup, config.handicaps).includes(o.value)
-      ),
-    [config.targetGroup, config.handicaps]
+  const themeStepCards = useMemo(() => {
+    const rows = [
+      ...THEME_OPTIONS[config.targetGroup],
+      ...SPECIAL_THEME_CARDS,
+    ] as const
+    return rows.map((row) => ({
+      ...row,
+      icon: THEME_STEP_ICONS[row.value],
+    }))
+  }, [config.targetGroup])
+
+  const canProceedFromThemeStep = useMemo(() => {
+    if (config.theme !== 'custom') return true
+    return config.customThemeText.length >= 3
+  }, [config.theme, config.customThemeText])
+
+  const selectTheme = useCallback(
+    (value: QuizTheme) => {
+      setConfig({
+        theme: value,
+        ...(value === 'custom'
+          ? {}
+          : { customThemeText: '' }),
+      })
+    },
+    [setConfig]
   )
 
   const previewFlags = useMemo(() => getAccessibilityFlags(config), [config])
@@ -465,7 +513,7 @@ export function Wizard() {
               <div
                 className="grid grid-cols-2 gap-3"
                 role="group"
-                aria-labelledby="step3-desc"
+                aria-labelledby="step2-desc"
               >
                 {categoryChoices.map(({ value, label, icon: Icon }) => {
                   const selected = config.category === value
@@ -500,34 +548,104 @@ export function Wizard() {
               <p className="text-center text-slate-300" id="step3-desc">
                 Zvolte téma otázek
               </p>
-              {themeChoices.length < themeOptions.length && (
-                <p className="text-center text-xs text-slate-500">
-                  Některá témata nejsou pro tuto kombinaci vhodná — obsah se řídí i
-                  kontextem zvolené skupiny (v zadání pro AI).
-                </p>
-              )}
+              <p className="text-center text-xs text-slate-500">
+                Nabídka se mění podle zvolené skupiny. „Překvap mě!“ nechá AI zvolit
+                téma; u vlastního tématu zadejte alespoň 3 znaky (včetně mezer).
+              </p>
               <div
                 className="grid grid-cols-2 gap-3 sm:grid-cols-3"
                 role="group"
                 aria-labelledby="step3-desc"
               >
-                {themeChoices.map(({ value, label, icon: Icon }) => {
+                {themeStepCards.map(({ value, label, icon: Icon }) => {
                   const selected = config.theme === value
+                  const cardBase = `flex flex-col gap-2 rounded-2xl border p-3 text-center shadow-sm backdrop-blur-md transition-colors sm:p-4 ${
+                    selected
+                      ? 'border-indigo-400/70 bg-indigo-500/20 text-white shadow-lg shadow-indigo-500/20 ring-1 ring-indigo-400/25'
+                      : 'border-white/10 bg-white/5 text-slate-100 hover:border-white/20 hover:bg-white/[0.08]'
+                  }`
+
+                  if (value === 'custom') {
+                    return (
+                      <div key="custom" className="sm:col-span-3">
+                        <div className={`${cardBase} items-stretch`}>
+                          <motion.button
+                            type="button"
+                            layout
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            onClick={() => selectTheme('custom')}
+                            aria-pressed={selected}
+                            aria-expanded={selected}
+                            className="flex flex-col items-center gap-2"
+                          >
+                            <Icon
+                              className="h-7 w-7 text-indigo-300 sm:h-8 sm:w-8"
+                              aria-hidden
+                            />
+                            <span className="text-sm font-semibold">{label}</span>
+                          </motion.button>
+                          <AnimatePresence initial={false}>
+                            {selected && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{
+                                  duration: 0.3,
+                                  ease: [0.22, 1, 0.36, 1],
+                                }}
+                                className="overflow-hidden"
+                              >
+                                <div className="border-t border-white/10 px-1 pt-3">
+                                  <label
+                                    htmlFor="wizard-custom-theme"
+                                    className="mb-2 block text-left text-xs font-medium text-slate-400"
+                                  >
+                                    Vlastní téma
+                                  </label>
+                                  <input
+                                    id="wizard-custom-theme"
+                                    type="text"
+                                    value={config.customThemeText}
+                                    onChange={(e) =>
+                                      setConfig({ customThemeText: e.target.value })
+                                    }
+                                    maxLength={500}
+                                    placeholder="Napište téma..."
+                                    className="w-full rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-400/80 focus:outline-none focus:ring-2 focus:ring-indigo-400/25"
+                                  />
+                                  {config.customThemeText.length > 0 &&
+                                    config.customThemeText.length < 3 && (
+                                      <p className="mt-2 text-left text-xs text-amber-200/90">
+                                        Ještě alespoň {3 - config.customThemeText.length}{' '}
+                                        znak
+                                        {3 - config.customThemeText.length === 1 ? '' : 'y'}.
+                                      </p>
+                                    )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   return (
                     <motion.button
                       key={value}
                       type="button"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => setConfig({ theme: value })}
+                      onClick={() => selectTheme(value)}
                       aria-pressed={selected}
-                      className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-3 text-center transition-colors sm:p-4 ${
-                        selected
-                          ? 'border-indigo-400 bg-indigo-500/20 text-white shadow-lg shadow-indigo-500/10'
-                          : 'border-slate-600/80 bg-slate-800/40 text-slate-200 hover:border-slate-500'
-                      }`}
+                      className={`${cardBase} items-center`}
                     >
-                      <Icon className="h-7 w-7 text-indigo-300 sm:h-8 sm:w-8" aria-hidden />
+                      <Icon
+                        className="h-7 w-7 text-indigo-300 sm:h-8 sm:w-8"
+                        aria-hidden
+                      />
                       <span className="text-sm font-semibold">{label}</span>
                     </motion.button>
                   )
@@ -620,8 +738,10 @@ export function Wizard() {
                 </div>
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
                   <dt className="text-slate-400">Téma</dt>
-                  <dd className="font-medium text-white">
-                    {labelTheme[config.theme]}
+                  <dd className="max-w-[min(100%,18rem)] text-right font-medium text-white sm:max-w-xs">
+                    {config.theme === 'custom'
+                      ? `${THEME_LABEL_CS.custom}: ${config.customThemeText.trim() || '—'}`
+                      : THEME_LABEL_CS[config.theme]}
                   </dd>
                 </div>
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
@@ -667,7 +787,8 @@ export function Wizard() {
             type="button"
             whileTap={{ scale: 0.98 }}
             onClick={goNext}
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-400"
+            disabled={step === 3 && !canProceedFromThemeStep}
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-400 disabled:pointer-events-none disabled:opacity-40"
           >
             Další krok
             <ArrowRight className="h-4 w-4" aria-hidden />

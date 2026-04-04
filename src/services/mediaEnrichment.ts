@@ -1,14 +1,10 @@
 import type { GeneratedQuiz, QuizConfiguration, QuizQuestion, QuizMedia } from '../types'
+import { THEME_MEDIA_HINT_EN } from '../lib/themeWizardOptions'
 
 const COMMONS_API = 'https://commons.wikimedia.org/w/api.php'
 
-const THEME_FALLBACK_EN: Record<QuizConfiguration['theme'], string> = {
-  seasonal: 'season holiday nature',
-  animals: 'wild animals nature',
-  general: 'landmark culture',
-  science: 'science laboratory nature',
-  pop_culture: 'cinema music concert',
-}
+const THEME_FALLBACK_EN: Record<QuizConfiguration['theme'], string> =
+  THEME_MEDIA_HINT_EN
 
 /** Krátké české/slovní spojky — ořez dotazu bez AI. */
 const STOP_WORDS = new Set([
