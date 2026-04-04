@@ -1,4 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import {
+  enrichQuizWithMedia,
+  generateQuizFromGemini,
+  parseQuizConfigurationBody,
+} from '../src/lib/serverQuizApi'
 
 function parseRequestBody(req: VercelRequest): unknown {
   const b = req.body
@@ -42,12 +47,6 @@ export default async function handler(
       })
       return
     }
-
-    const {
-      generateQuizFromGemini,
-      parseQuizConfigurationBody,
-      enrichQuizWithMedia,
-    } = await import('../src/lib/serverQuizApi')
 
     let config: ReturnType<typeof parseQuizConfigurationBody>
     try {
