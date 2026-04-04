@@ -60,8 +60,19 @@ export type MediaEnrichmentRuntime = {
 }
 
 function defaultClientMediaRuntime(): MediaEnrichmentRuntime {
+  let enabled = true
+  try {
+    const viteEnv = (
+      import.meta as ImportMeta & { env?: { VITE_QUIZ_MEDIA?: string } }
+    ).env
+    if (viteEnv != null) {
+      enabled = viteEnv.VITE_QUIZ_MEDIA !== '0'
+    }
+  } catch {
+    /* Node / nevite bundlování — média zapnuta */
+  }
   return {
-    enabled: import.meta.env.VITE_QUIZ_MEDIA !== '0',
+    enabled,
     pexelsApiKey: undefined,
   }
 }

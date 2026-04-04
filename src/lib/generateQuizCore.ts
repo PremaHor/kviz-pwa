@@ -240,6 +240,21 @@ export interface GeminiCallOpts {
 }
 
 /**
+ * Volitelné thinking — jen když je `GEMINI_THINKING_BUDGET` číslo (např. 0).
+ * Výchozí je vynechat, protože u modelů bez „thinking“ API jinak vrací 400.
+ */
+function geminiThinkingConfigFromEnv():
+  | { thinkingConfig: { thinkingBudget: number } }
+  | Record<string, never> {
+  if (typeof process === 'undefined') return {}
+  const raw = process.env.GEMINI_THINKING_BUDGET?.trim()
+  if (!raw) return {}
+  const n = Number.parseInt(raw, 10)
+  if (!Number.isFinite(n)) return {}
+  return { thinkingConfig: { thinkingBudget: n } }
+}
+
+/**
  * Volá Gemini a vrátí naparsovaný kvíz **bez** obohacení o média.
  */
 export async function generateQuizFromGemini(
@@ -275,7 +290,7 @@ export async function generateQuizFromGemini(
       maxOutputTokens: maxOutputTokensForQuiz(questionCount),
       responseMimeType: 'application/json',
       responseJsonSchema: quizResponseJsonSchema(questionCount),
-      thinkingConfig: { thinkingBudget: 0 },
+      ...geminiThinkingConfigFromEnv(),
     },
   }
 

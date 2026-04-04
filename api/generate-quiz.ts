@@ -68,17 +68,32 @@ export default async function handler(
       pexelsApiKey: pexelsKey || undefined,
     })
 
-    res.status(200).json(quiz)
+    let payload: string
+    try {
+      payload = JSON.stringify(quiz)
+    } catch (serErr) {
+      console.error('[api/generate-quiz] serialize', serErr)
+      res.status(500).json({
+        error: 'Nepodařilo se serializovat odpověď kvízu.',
+        hint: 'Zkontrolujte log funkce na Vercelu.',
+      })
+      return
+    }
+    res.status(200).send(payload)
   } catch (e) {
     console.error('[api/generate-quiz]', e)
     const msg =
       e instanceof Error ? e.message : 'Neočekávaná chyba serveru.'
-    if (!res.headersSent) {
-      res.status(500).json({
-        error: msg,
-        hint:
-          'Zkontrolujte log funkce ve Vercelu (Deployments → zvolte build → Functions).',
-      })
+    try {
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: msg,
+          hint:
+            'Zkontrolujte log funkce ve Vercelu (Deployments → zvolte build → Functions).',
+        })
+      }
+    } catch (sendErr) {
+      console.error('[api/generate-quiz] send error body failed', sendErr)
     }
   }
 }
