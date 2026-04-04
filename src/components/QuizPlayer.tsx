@@ -1,59 +1,27 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { AccessibilityFlags } from '@/lib/accessibilityUi'
-import {
-  getAccessibilityFlags,
-  quizExplanationClass,
-  quizOptionIdleClass,
-  quizOptionLabelClass,
-  quizOptionPaddingClass,
-  quizOptionsGridClass,
-  quizProgressClass,
-  quizQuestionTitleClass,
-  quizSurfaceClass,
-} from '@/lib/accessibilityUi'
+import { getAccessibilityFlags } from '@/lib/accessibilityUi'
 import { useQuizStore } from '@/store/useQuizStore'
 
 type QuestionSlot = { selected: number | null; revealed: boolean }
 
-function optionButtonClasses(
-  flags: AccessibilityFlags,
-  revealed: boolean,
-  isSelected: boolean,
-  isCorrect: boolean
-): string {
-  const pad = quizOptionPaddingClass(flags)
+const OPTION_IDLE_CLASSES: [string, string, string, string] = [
+  'border-rose-400/90 bg-rose-700 hover:bg-rose-600 focus-visible:ring-rose-300',
+  'border-sky-400/90 bg-sky-700 hover:bg-sky-600 focus-visible:ring-sky-300',
+  'border-amber-400/90 bg-amber-700 hover:bg-amber-600 focus-visible:ring-amber-300',
+  'border-violet-400/90 bg-violet-700 hover:bg-violet-600 focus-visible:ring-violet-300',
+]
+
+const OPTION_STAGGER = 0.15
+
+function navButtonClass(variant: 'back' | 'cancel'): string {
   const base =
-    'w-full rounded-xl border-2 text-left font-medium transition-colors disabled:cursor-default'
-  const size = flags.visual ? 'text-base font-semibold' : 'text-base'
-
-  if (!revealed) {
-    if (isSelected) {
-      if (flags.visual) {
-        return `${base} ${pad} ${size} border-cyan-400 bg-neutral-800 text-white ring-2 ring-cyan-300`
-      }
-      return `${base} ${pad} ${size} border-indigo-400 bg-indigo-500/20 text-white ring-1 ring-indigo-400/30`
-    }
-    return quizOptionIdleClass(flags)
+    'inline-flex items-center gap-2 rounded-xl px-4 py-3 text-lg font-semibold text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950'
+  if (variant === 'back') {
+    return `${base} border-2 border-slate-500 bg-slate-800 hover:bg-slate-700 disabled:pointer-events-none disabled:opacity-35 focus-visible:ring-slate-400`
   }
-
-  if (isCorrect) {
-    if (flags.visual) {
-      return `${base} ${pad} ${size} border-emerald-400 bg-emerald-950 text-white ring-2 ring-emerald-300`
-    }
-    return `${base} ${pad} ${size} border-emerald-500/80 bg-emerald-500/15 text-white ring-1 ring-emerald-500/40`
-  }
-  if (isSelected) {
-    if (flags.visual) {
-      return `${base} ${pad} ${size} border-rose-400 bg-rose-950 text-white ring-2 ring-rose-300`
-    }
-    return `${base} ${pad} ${size} border-rose-500/80 bg-rose-500/15 text-white ring-1 ring-rose-500/40`
-  }
-  if (flags.visual) {
-    return `${base} ${pad} ${size} border-neutral-600 bg-neutral-900/40 text-neutral-500`
-  }
-  return `${base} ${pad} ${size} border-slate-600/50 bg-slate-800/30 text-slate-400`
+  return `${base} border-2 border-rose-500/80 bg-rose-950/80 hover:bg-rose-900/90 focus-visible:ring-rose-400`
 }
 
 export function QuizPlayer() {
@@ -105,6 +73,11 @@ export function QuizPlayer() {
     [question, revealed, index, updateSlot]
   )
 
+  const revealAnswerOnly = useCallback(() => {
+    if (revealed || !question) return
+    updateSlot(index, { revealed: true })
+  }, [question, revealed, index, updateSlot])
+
   const goNext = useCallback(() => {
     if (!quiz || !question || !revealed) return
     if (isLast) {
@@ -140,200 +113,293 @@ export function QuizPlayer() {
     if (ok) cancelQuiz()
   }, [cancelQuiz])
 
+  useEffect(() => {
+    if (!quiz || !question) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (
+        t &&
+        (t.tagName === 'INPUT' ||
+          t.tagName === 'TEXTAREA' ||
+          t.isContentEditable)
+      ) {
+        return
+      }
+
+      const numpadToIndex: Record<string, number> = {
+        Numpad1: 0,
+        Numpad2: 1,
+        Numpad3: 2,
+        Numpad4: 3,
+      }
+
+      if (!revealed) {
+        const np = numpadToIndex[e.code]
+        if (np !== undefined) {
+          e.preventDefault()
+          pickOption(np)
+          return
+        }
+        if (e.key >= '1' && e.key <= '4') {
+          e.preventDefault()
+          pickOption(Number(e.key) - 1)
+          return
+        }
+      }
+
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (e.repeat) return
+        e.preventDefault()
+        if (revealed) {
+          goNext()
+        } else {
+          revealAnswerOnly()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [quiz, question, revealed, pickOption, goNext, revealAnswerOnly])
+
   if (!quiz || !question || !slot) {
     return (
-      <p className="text-slate-300" role="alert">
-        Žádný kvíz k zobrazení.
-      </p>
+      <div
+        className="flex min-h-[100dvh] w-full items-center justify-center bg-gray-950 px-6"
+        role="alert"
+      >
+        <p className="text-center text-2xl font-semibold text-slate-200">
+          Žádný kvíz k zobrazení.
+        </p>
+      </div>
     )
   }
 
   const shellClass = flags.dyslexia ? 'font-dyslexia' : ''
-
-  const primaryNavClass = flags.visual
-    ? 'inline-flex items-center gap-2 rounded-xl border-2 border-amber-400 bg-neutral-900 px-3 py-2.5 text-base font-semibold text-white transition-colors hover:bg-neutral-800 disabled:pointer-events-none disabled:opacity-40'
-    : 'inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800/70 px-3 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700/80 disabled:pointer-events-none disabled:opacity-40'
-
-  const cancelClass = flags.visual
-    ? 'inline-flex items-center gap-2 rounded-xl border-2 border-rose-400 bg-rose-950/50 px-3 py-2.5 text-base font-semibold text-rose-100 transition-colors hover:bg-rose-950/80'
-    : 'inline-flex items-center gap-2 rounded-xl border border-rose-500/40 bg-rose-950/30 px-3 py-2 text-sm font-medium text-rose-200 transition-colors hover:bg-rose-950/50'
-
-  const nextClass = flags.visual
-    ? 'mt-4 w-full rounded-xl border-2 border-amber-400 bg-amber-500 py-3.5 text-center text-base font-bold text-black shadow-lg hover:bg-amber-400'
-    : 'mt-4 w-full rounded-xl bg-indigo-500 py-3 text-center text-base font-semibold text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-400'
-
-  const explainLabel =
-    flags.visual ? (
-      <span className="font-bold text-amber-300">Vysvětlení: </span>
-    ) : (
-      <span className="font-semibold text-indigo-300">Vysvětlení: </span>
-    )
+  const optionGap = flags.motor ? 'gap-5 md:gap-6' : 'gap-4 md:gap-5'
+  const iconSize = 'h-6 w-6 shrink-0'
 
   return (
-    <div className={`w-full max-w-lg ${shellClass}`}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+    <div
+      className={`flex min-h-[100dvh] w-full flex-col bg-gray-950 text-white ${shellClass}`}
+    >
+      <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 px-4 py-4 md:px-10 md:py-5">
         <motion.button
           type="button"
           whileTap={{ scale: 0.98 }}
           onClick={goBack}
           disabled={index === 0}
           aria-disabled={index === 0}
-          className={primaryNavClass}
+          className={navButtonClass('back')}
         >
-          <ArrowLeft className={flags.visual ? 'h-5 w-5 shrink-0' : 'h-4 w-4 shrink-0'} aria-hidden />
+          <ArrowLeft className={iconSize} aria-hidden />
           Zpět
         </motion.button>
+        <p className="order-last w-full text-center text-lg font-bold tracking-wide text-amber-200/95 md:order-none md:w-auto md:text-xl">
+          Otázka {index + 1} z {total}
+        </p>
         <motion.button
           type="button"
           whileTap={{ scale: 0.98 }}
           onClick={handleCancel}
-          className={cancelClass}
+          className={navButtonClass('cancel')}
         >
-          <X className={flags.visual ? 'h-5 w-5 shrink-0' : 'h-4 w-4 shrink-0'} aria-hidden />
+          <X className={iconSize} aria-hidden />
           Zrušit kvíz
         </motion.button>
-      </div>
+      </header>
 
-      <p className={quizProgressClass(flags)}>
-        Otázka {index + 1} z {total}
-      </p>
-      <AnimatePresence mode="wait">
-        <motion.article
-          key={question.id}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -12 }}
-          transition={{ duration: 0.25 }}
-          aria-labelledby={`q-${question.id}-title`}
-          className={quizSurfaceClass(flags)}
-        >
-          <h2
-            id={`q-${question.id}-title`}
-            className={quizQuestionTitleClass(flags)}
+      <main className="flex flex-1 flex-col items-center px-4 py-6 md:px-12 md:py-10 lg:py-12">
+        <p className="mb-2 max-w-5xl text-center text-sm font-medium uppercase tracking-widest text-slate-500">
+          {quiz.title}
+        </p>
+        <p className="mb-6 max-w-3xl text-center text-xs text-slate-600 md:text-sm">
+          Klávesnice: <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">1</kbd>–
+          <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">4</kbd> odpověď ·{' '}
+          <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">Mezerník</kbd> /{' '}
+          <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">Enter</kbd>{' '}
+          odhalit nebo pokračovat
+        </p>
+
+        <AnimatePresence mode="wait">
+          <motion.article
+            key={question.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            aria-labelledby={`q-${question.id}-title`}
+            className="flex w-full max-w-6xl flex-1 flex-col"
           >
-            {question.questionText}
-          </h2>
-
-          {question.media?.kind === 'image' && (
-            <figure
-              className={`mt-4 overflow-hidden rounded-xl ${
-                flags.visual
-                  ? 'ring-2 ring-amber-400/90 ring-offset-2 ring-offset-slate-900'
-                  : 'ring-1 ring-slate-600/60'
-              }`}
+            <motion.h2
+              id={`q-${question.id}-title`}
+              initial={{ opacity: 0, y: -28 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="mx-auto max-w-4xl text-center text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl"
             >
-              <img
-                src={question.media.displayUrl}
-                alt={question.media.alt}
-                loading="lazy"
-                decoding="async"
-                className="max-h-52 w-full object-cover sm:max-h-60"
-              />
-              <figcaption className="sr-only">{question.media.alt}</figcaption>
-            </figure>
-          )}
+              {question.questionText}
+            </motion.h2>
 
-          {question.media?.kind === 'video' && (
-            <div
-              className={`mt-4 overflow-hidden rounded-xl ${
-                flags.visual
-                  ? 'ring-2 ring-amber-400/90 ring-offset-2 ring-offset-slate-900'
-                  : 'ring-1 ring-slate-600/60'
-              }`}
-            >
-              <video
-                controls
-                preload="metadata"
-                className="max-h-60 w-full bg-black/40 object-contain sm:max-h-72"
-                src={question.media.url}
-                aria-label={question.media.alt}
-              >
-                {question.media.alt}
-              </video>
-            </div>
-          )}
-
-          {question.media &&
-            (question.media.sourceLabel || question.media.sourceUrl) && (
-              <p className="mt-2 text-center text-xs text-slate-500">
-                {question.media.sourceUrl ? (
-                  <a
-                    href={question.media.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline decoration-slate-500 underline-offset-2 hover:text-slate-300"
-                  >
-                    {question.media.sourceLabel}
-                  </a>
-                ) : (
-                  question.media.sourceLabel
-                )}
-              </p>
+            {question.media?.kind === 'image' && (
+              <figure className="mx-auto mt-8 w-full max-w-4xl overflow-hidden rounded-2xl ring-2 ring-slate-600/80 ring-offset-4 ring-offset-gray-950">
+                <img
+                  src={question.media.displayUrl}
+                  alt={question.media.alt}
+                  loading="lazy"
+                  decoding="async"
+                  className="max-h-[min(50vh,28rem)] w-full object-contain md:max-h-[min(55vh,32rem)]"
+                />
+                <figcaption className="sr-only">{question.media.alt}</figcaption>
+              </figure>
             )}
 
-          <div
-            className={quizOptionsGridClass(flags)}
-            role="group"
-            aria-label="Možnosti odpovědi"
-          >
-            {question.options.map((opt, i) => {
-              const isSelected = selected === i
-              const isCorrect = i === question.correctAnswerIndex
-              return (
-                <motion.button
-                  key={i}
-                  type="button"
-                  disabled={revealed}
-                  onClick={() => pickOption(i)}
-                  whileTap={revealed ? undefined : { scale: 0.99 }}
-                  className={optionButtonClasses(
-                    flags,
-                    revealed,
-                    isSelected,
-                    isCorrect
-                  )}
-                  aria-pressed={isSelected}
+            {question.media?.kind === 'video' && (
+              <div className="mx-auto mt-8 w-full max-w-4xl overflow-hidden rounded-2xl ring-2 ring-slate-600/80 ring-offset-4 ring-offset-gray-950">
+                <video
+                  controls
+                  preload="metadata"
+                  className="max-h-[min(50vh,28rem)] w-full bg-black object-contain md:max-h-[min(55vh,32rem)]"
+                  src={question.media.url}
+                  aria-label={question.media.alt}
                 >
-                  <span className={quizOptionLabelClass(flags)}>
-                    {String.fromCharCode(65 + i)}.
-                  </span>
-                  {opt}
-                </motion.button>
-              )
-            })}
-          </div>
+                  {question.media.alt}
+                </video>
+              </div>
+            )}
 
-          <AnimatePresence>
-            {revealed && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.25 }}
-                className="overflow-hidden"
-              >
-                <p
-                  className={quizExplanationClass(flags)}
+            {question.media &&
+              (question.media.sourceLabel || question.media.sourceUrl) && (
+                <p className="mt-3 text-center text-sm text-slate-500">
+                  {question.media.sourceUrl ? (
+                    <a
+                      href={question.media.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
+                    >
+                      {question.media.sourceLabel}
+                    </a>
+                  ) : (
+                    question.media.sourceLabel
+                  )}
+                </p>
+              )}
+
+            <div
+              className={`mt-10 grid w-full max-w-5xl grid-cols-1 md:grid-cols-2 ${optionGap} md:mt-12`}
+              role="group"
+              aria-label="Možnosti odpovědi"
+            >
+              {question.options.map((opt, i) => {
+                const isSelected = selected === i
+                const isCorrect = i === question.correctAnswerIndex
+
+                const idle = OPTION_IDLE_CLASSES[i] ?? OPTION_IDLE_CLASSES[0]
+                let surface = `w-full rounded-2xl border-2 px-5 py-6 text-left text-2xl font-bold leading-snug text-white shadow-lg transition-colors focus:outline-none focus-visible:ring-4 md:px-7 md:py-8 md:text-3xl ${idle}`
+
+                if (revealed) {
+                  if (isCorrect) {
+                    surface =
+                      'w-full rounded-2xl border-2 border-green-300 bg-green-500 px-5 py-6 text-left text-2xl font-extrabold leading-snug text-white shadow-[0_0_40px_rgba(34,197,94,0.45)] focus:outline-none focus-visible:ring-4 focus-visible:ring-green-300 md:px-7 md:py-8 md:text-3xl'
+                  } else {
+                    surface = `${surface} saturate-50`
+                  }
+                }
+
+                const enterDelay = 0.12 + i * OPTION_STAGGER
+                const optionMotion = revealed
+                  ? isCorrect
+                    ? {
+                        scale: [1, 1.06, 1.05],
+                        opacity: 1,
+                        y: 0,
+                        transition: { duration: 0.5, ease: 'easeOut' },
+                      }
+                    : {
+                        opacity: 0.4,
+                        scale: 1,
+                        y: 0,
+                        transition: { duration: 0.35 },
+                      }
+                  : {
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      transition: {
+                        delay: enterDelay,
+                        type: 'spring',
+                        stiffness: 380,
+                        damping: 26,
+                      },
+                    }
+
+                return (
+                  <motion.button
+                    key={`${question.id}-${i}`}
+                    type="button"
+                    initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                    animate={optionMotion}
+                    disabled={revealed}
+                    onClick={() => pickOption(i)}
+                    whileTap={revealed ? undefined : { scale: 0.99 }}
+                    className={surface}
+                    aria-pressed={isSelected}
+                  >
+                    <span className="mr-3 inline-block min-w-[2ch] font-black text-white/90">
+                      {String.fromCharCode(65 + i)}.
+                    </span>
+                    {opt}
+                  </motion.button>
+                )
+              })}
+            </div>
+
+            <AnimatePresence>
+              {revealed && question.explanation.trim() ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.35, delay: 0.1 }}
+                  className="mt-10 w-full max-w-5xl border-l-4 border-sky-400 bg-blue-900/50 px-6 py-5 text-xl leading-relaxed text-blue-100 shadow-lg md:mt-12 md:px-8 md:py-6 md:text-2xl"
                   role="region"
                   aria-live="polite"
                 >
-                  {explainLabel}
+                  <span className="font-bold text-sky-200">Vysvětlení: </span>
                   {question.explanation}
-                </p>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={goNext}
-                  className={nextClass}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {revealed && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-8 w-full max-w-5xl"
                 >
-                  {isLast ? 'Zobrazit výsledky' : 'Další otázka'}
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.article>
-      </AnimatePresence>
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={goNext}
+                    className="w-full rounded-2xl border-2 border-amber-300 bg-amber-500 py-5 text-center text-2xl font-extrabold text-gray-950 shadow-lg shadow-amber-500/25 transition-colors hover:bg-amber-400 focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 md:py-6 md:text-3xl"
+                  >
+                    {isLast ? 'Zobrazit výsledky' : 'Další otázka'}
+                  </motion.button>
+                  <p className="mt-3 text-center text-sm text-slate-500">
+                    Mezerník nebo Enter — pokračovat
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.article>
+        </AnimatePresence>
+      </main>
     </div>
   )
 }

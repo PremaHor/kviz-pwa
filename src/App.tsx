@@ -66,10 +66,18 @@ export default function App() {
       </a>
       <main
         id="main-content"
-        className="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6 sm:py-14"
+        className={
+          step === 'playing'
+            ? 'flex flex-1 flex-col items-stretch justify-stretch p-0'
+            : 'flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6 sm:py-14'
+        }
         tabIndex={-1}
       >
-        <div className="w-full max-w-2xl">
+        <div
+          className={
+            step === 'playing' ? 'w-full max-w-none' : 'w-full max-w-2xl'
+          }
+        >
           <AnimatePresence mode="wait">
             {step === 'wizard' && (
               <motion.div
@@ -105,7 +113,7 @@ export default function App() {
                 animate="animate"
                 exit="exit"
                 transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                className="flex justify-center"
+                className="w-full"
               >
                 <QuizPlayer />
               </motion.div>
