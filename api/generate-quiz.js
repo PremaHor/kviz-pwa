@@ -178,31 +178,21 @@ ${accessibilityHints(config2.handicaps)}
 - U ka\u017Ed\xE9 ot\xE1zky mus\xED b\xFDt "mediaSearchHint": 2 a\u017E 8 anglick\xFDch slov popisuj\xEDc\xEDch hlavn\xED vizu\xE1ln\xED motiv pro ilustraci (konkr\xE9tn\xED v\u011Bc, m\xEDsto, \u017Eivo\u010Dich, p\u0159edm\u011Bt nebo zn\xE1m\xE1 osoba z kontextu ot\xE1zky). Pouze p\xEDsmena anglick\xE9 abecedy, \u010D\xEDsla a mezery \u2014 \u017E\xE1dn\xE1 \u010De\u0161tina, \u017E\xE1dn\xE1 cel\xE1 v\u011Bta, \u017E\xE1dn\xE9 uvozov\xE9 v\u011Bty. Mus\xED \xFAzce souviset s obsahem ot\xE1zky (typicky kl\xED\u010Dov\xE9 slovo ze spr\xE1vn\xE9 odpov\u011Bdi nebo z jej\xEDho zn\u011Bn\xED). P\u0159\xEDklady: "red squirrel", "Charles Bridge Prague", "volleyball net beach".
 - Odpov\u011Bdi a\u0165 jsou fakticky spr\xE1vn\xE9 a v souladu s t\xE9matem.`;
 }
-function quizResponseJsonSchema(questionCount) {
+function quizResponseJsonSchema(_questionCount) {
   const qItem = {
     type: "object",
     properties: {
-      id: { type: "string", description: "Identifik\xE1tor ot\xE1zky, nap\u0159. q1" },
+      id: { type: "string" },
       questionText: { type: "string" },
       options: {
         type: "array",
-        items: { type: "string" },
-        minItems: 4,
-        maxItems: 4
+        items: { type: "string" }
       },
-      correctAnswerIndex: {
-        type: "integer",
-        minimum: 0,
-        maximum: 3
-      },
+      correctAnswerIndex: { type: "integer" },
       explanation: { type: "string" },
-      mediaSearchHint: {
-        type: "string",
-        description: "2-8 English words: concrete visual subject for image search only, ASCII letters/digits/spaces, tied to question topic."
-      }
+      mediaSearchHint: { type: "string" }
     },
     required: [
-      "id",
       "questionText",
       "options",
       "correctAnswerIndex",
@@ -216,9 +206,7 @@ function quizResponseJsonSchema(questionCount) {
       title: { type: "string" },
       questions: {
         type: "array",
-        items: qItem,
-        minItems: questionCount,
-        maxItems: questionCount
+        items: qItem
       }
     },
     required: ["title", "questions"]

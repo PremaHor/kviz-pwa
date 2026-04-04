@@ -84,34 +84,28 @@ ${accessibilityHints(config.handicaps)}
 - Odpovědi ať jsou fakticky správné a v souladu s tématem.`
 }
 
+/**
+ * Minimální JSON Schema pro Gemini — bez min/max délky polí a bez minimum/maximum u čísel.
+ * Přesný počet otázek a 4 možnosti validuje `parseGeneratedQuiz` (jinak API 400:
+ * „schema produces a constraint that has too many states“).
+ */
 export function quizResponseJsonSchema(
-  questionCount: number
+  _questionCount: number
 ): Record<string, unknown> {
   const qItem = {
     type: 'object',
     properties: {
-      id: { type: 'string', description: 'Identifikátor otázky, např. q1' },
+      id: { type: 'string' },
       questionText: { type: 'string' },
       options: {
         type: 'array',
         items: { type: 'string' },
-        minItems: 4,
-        maxItems: 4,
       },
-      correctAnswerIndex: {
-        type: 'integer',
-        minimum: 0,
-        maximum: 3,
-      },
+      correctAnswerIndex: { type: 'integer' },
       explanation: { type: 'string' },
-      mediaSearchHint: {
-        type: 'string',
-        description:
-          '2-8 English words: concrete visual subject for image search only, ASCII letters/digits/spaces, tied to question topic.',
-      },
+      mediaSearchHint: { type: 'string' },
     },
     required: [
-      'id',
       'questionText',
       'options',
       'correctAnswerIndex',
@@ -126,8 +120,6 @@ export function quizResponseJsonSchema(
       questions: {
         type: 'array',
         items: qItem,
-        minItems: questionCount,
-        maxItems: questionCount,
       },
     },
     required: ['title', 'questions'],
