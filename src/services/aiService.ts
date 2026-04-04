@@ -56,6 +56,48 @@ function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
   }
 }
 
+/** Vykoukne čitelný text z API `{ error, hint? }` i vnořených struktur. */
+function errorTextFromUnknown(value: unknown, fallback: string): string {
+  if (typeof value === 'string') {
+    const t = value.trim()
+    return t.length > 0 ? t : fallback
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const o = value as Record<string, unknown>
+    if (typeof o.message === 'string' && o.message.trim()) {
+      return o.message.trim()
+    }
+    if ('error' in o && o.error !== undefined) {
+      const nested = errorTextFromUnknown(o.error, '')
+      if (nested) return nested
+    }
+    try {
+      const s = JSON.stringify(value)
+      return s.length > 400 ? `${s.slice(0, 400)}…` : s
+    } catch {
+      return fallback
+    }
+  }
+  if (value == null || value === '') return fallback
+  return String(value)
+}
+
+function humanizeApiError(
+  data: unknown,
+  status: number
+): string {
+  if (!data || typeof data !== 'object') {
+    return `Chyba serveru (${status}).`
+  }
+  const o = data as Record<string, unknown>
+  const main = errorTextFromUnknown(o.error, '')
+  const hint = errorTextFromUnknown(o.hint, '')
+  const parts = [main, hint].filter(
+    (p, i, a) => p.length > 0 && a.indexOf(p) === i
+  )
+  return parts.length > 0 ? parts.join(' — ') : `Chyba serveru (${status}).`
+}
+
 function parseJsonResponse(text: string, status: number): unknown {
   const trimmed = text.replace(/^\uFEFF/, '').trim()
   if (!trimmed) {
@@ -104,11 +146,7 @@ async function fetchQuizFromApi(
   const data = parseJsonResponse(text, res.status)
 
   if (!res.ok) {
-    const err =
-      data && typeof data === 'object' && data !== null && 'error' in data
-        ? String((data as { error: unknown }).error)
-        : `Chyba serveru (${res.status}).`
-    throw new Error(err)
+    throw new Error(humanizeApiError(data, res.status))
   }
 
   if (

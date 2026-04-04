@@ -37,7 +37,14 @@ export default function App() {
       } catch (e) {
         if (!cancelled && runId === loadingRun.current) {
           const msg =
-            e instanceof Error ? e.message : 'Generování kvízu se nezdařilo.'
+            e instanceof Error
+              ? e.message
+              : typeof e === 'object' &&
+                  e !== null &&
+                  'message' in e &&
+                  typeof (e as { message: unknown }).message === 'string'
+                ? (e as { message: string }).message
+                : 'Generování kvízu se nezdařilo.'
           setGenerationError(msg)
           setStep('wizard')
         }
