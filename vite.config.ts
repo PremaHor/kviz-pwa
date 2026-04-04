@@ -20,7 +20,7 @@ export default defineConfig({
         name: 'Kvíz na míru',
         short_name: 'Kvíz na míru',
         description:
-          'Přístupné kvízy v češtině: téma, věková skupina a úpravy pro zrak, dyslexii či motoriku. Generuje AI.',
+          'Přístupné kvízy v češtině: téma, věková skupina a volitelné úpravy přístupnosti. Generuje AI.',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

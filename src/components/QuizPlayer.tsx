@@ -177,7 +177,7 @@ export function QuizPlayer() {
   }
 
   const shellClass = flags.dyslexia ? 'font-dyslexia' : ''
-  const optionGap = flags.motor ? 'gap-5 md:gap-6' : 'gap-4 md:gap-5'
+  const optionGap = 'gap-4 md:gap-5'
   const iconSize = 'h-6 w-6 shrink-0'
 
   return (

@@ -4,9 +4,11 @@ export type HandicapType =
   | 'none'
   | 'visual_impairment'
   | 'dyslexia'
-  | 'motor_skills'
-  | 'cognitive'
-  | 'dementia'
+  | /** Kognitivní omezení a/nebo demence — jedna volba v průvodci */
+  'cognitive_dementia'
+  | 'hearing_impairment'
+  | 'autism_spectrum'
+  | 'czech_learners'
 
 export type QuizCategory = 'knowledge' | 'educational' | 'fun' | 'competitive'
 

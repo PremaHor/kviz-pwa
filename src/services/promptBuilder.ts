@@ -6,13 +6,15 @@ const HANDICAP_RULES: Partial<
   dyslexia:
     'PRAVIDLO PRO DYSLEXII: Používej výhradně běžná slova a krátké věty. Vyhni se cizím slovům, složitým souvětím, dvojitým záporům a zbytečně těžkému pravopisu u vymyšlených odpovědí.',
   visual_impairment:
-    'PRAVIDLO PRO ZRAKOVÉ POSTIŽENÍ: Otázky nesmí spoléhat na to, co „vidíš na obrázku“, na barvy jako jediný rozdíl mezi odpověďmi ani na popis vizuálních detailů. Vše musí být srozumitelné pouze z textu (popř. zvuky, hmat, logika, běžné znalosti).',
-  cognitive:
-    'PRAVIDLO PRO KOGNITIVNÍ OMEZENÍ: Jedna jasná informace v otázce, žádné metafory, ironie ani skryté významy. Odpovědi musí být zjevně rozlišitelné.',
-  motor_skills:
-    'PRAVIDLO PRO OMEZENOU MOTORIKU: Možnosti odpovědí piš krátce (pár slov), bez zbytečně dlouhých souvětí.',
-  dementia:
-    'PRAVIDLO PRO DEMENCI / TĚŽŠÍ PAMĚŤOVÉ OBTÍŽE: Velmi prostá slova, konkrétní kontext (škola, domov, příroda). Pozitivní tón, krátké otázky bez abstraktních hádanek.',
+    'PRAVIDLO PRO ZRAKOVÉ POSTIŽENÍ: Otázky nesmí spoléhat na to, co „vidíš na obrázku“, na barvy jako jediný rozdíl mezi odpověďmi ani na popis vizuálních detailů. Vše musí být srozumitelné pouze z textu (popř. hmat, logika, běžné znalosti).',
+  cognitive_dementia:
+    'PRAVIDLO PRO KOGNITIVNÍ OMEZENÍ A DEMENCI: Jedna jasná informace v otázce, žádné metafory, ironie ani skryté významy. Velmi prostá slova, konkrétní kontext (škola, domov, příroda). Pozitivní tón, krátké otázky bez abstraktních hádanek. Odpovědi musí být zjevně rozlišitelné.',
+  hearing_impairment:
+    'PRAVIDLO PRO NESLYŠÍCÍ: Používej přímý, doslovný jazyk bez metafor a rčení. Absolutně se vyhni otázkám na hudbu, zvuky, hlasy nebo audio vjemy.',
+  autism_spectrum:
+    'PRAVIDLO PRO AUTISMUS: Otázky musí být 100% logické a faktické. Nepoužívej sarkasmus, ironii ani emočně nejednoznačné situace. Odpovědi nesmí být chytáky založené na slovíčkaření.',
+  czech_learners:
+    'PRAVIDLO PRO CIZINCE: Používej jen základní a mezinárodně srozumitelnou slovní zásobu (A2/B1). Zcela se vyhni lokální české popkultuře, českým hercům, večerníčkům a lokálním specifikům.',
 }
 
 const WEB_INSPIRATION: Record<TargetGroup, string> = {

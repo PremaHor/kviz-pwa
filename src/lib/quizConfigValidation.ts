@@ -12,10 +12,34 @@ const HANDICAPS: HandicapType[] = [
   'none',
   'visual_impairment',
   'dyslexia',
+  'cognitive_dementia',
+  'hearing_impairment',
+  'autism_spectrum',
+  'czech_learners',
+]
+
+/** Zpětná kompatibilita starších klientů API. */
+const LEGACY_HANDICAP_KEYS = new Set([
   'motor_skills',
   'cognitive',
   'dementia',
-]
+])
+
+function normalizeHandicapsFromApi(strings: string[]): HandicapType[] {
+  const set = new Set<HandicapType>()
+  for (const h of strings) {
+    if (h === 'none') continue
+    if (h === 'motor_skills') continue
+    if (h === 'cognitive' || h === 'dementia') {
+      set.add('cognitive_dementia')
+      continue
+    }
+    if (HANDICAPS.includes(h as HandicapType) && h !== 'none') {
+      set.add(h as HandicapType)
+    }
+  }
+  return set.size === 0 ? ['none'] : [...set]
+}
 const CATEGORIES: QuizCategory[] = [
   'knowledge',
   'educational',
@@ -64,13 +88,21 @@ export function parseQuizConfigurationBody(raw: unknown): QuizConfiguration {
   if (!Array.isArray(handicapsRaw)) {
     throw new Error('Neplatné pole handicapů.')
   }
-  const handicaps = handicapsRaw.filter(
-    (h): h is HandicapType =>
-      isString(h) && HANDICAPS.includes(h as HandicapType)
-  )
-  if (handicaps.length !== handicapsRaw.length) {
+  const strings = handicapsRaw.filter(isString)
+  if (strings.length !== handicapsRaw.length) {
     throw new Error('Neplatná hodnota v handicapech.')
   }
+  const allowedInput = new Set<string>([
+    ...HANDICAPS,
+    ...LEGACY_HANDICAP_KEYS,
+  ])
+  for (const h of strings) {
+    if (!allowedInput.has(h)) {
+      throw new Error('Neplatná hodnota v handicapech.')
+    }
+  }
+
+  const handicaps = normalizeHandicapsFromApi(strings)
 
   return {
     targetGroup: targetGroup as TargetGroup,

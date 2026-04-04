@@ -55,17 +55,14 @@ const targetOptions: { value: TargetGroup; label: string; icon: typeof User }[] 
 type RealHandicap = Exclude<HandicapType, 'none'>
 
 /** Více výběr v pokročilém panelu (bez „Žádný“ — prázdný výběr = `['none']` ve store). */
-const advancedHandicapOptionsBase: { value: RealHandicap; label: string }[] = [
-  { value: 'visual_impairment', label: 'Zrakové postižení' },
+const advancedHandicapOptions: { value: RealHandicap; label: string }[] = [
+  { value: 'cognitive_dementia', label: 'Kognitivní (Demence)' },
   { value: 'dyslexia', label: 'Dyslexie' },
-  { value: 'motor_skills', label: 'Motorika' },
-  { value: 'cognitive', label: 'Kognitivní' },
+  { value: 'visual_impairment', label: 'Zrakové postižení' },
+  { value: 'hearing_impairment', label: 'Sluchové postižení (Neslyšící)' },
+  { value: 'autism_spectrum', label: 'Poruchy autistického spektra' },
+  { value: 'czech_learners', label: 'Cizinci (Základy češtiny)' },
 ]
-
-const handicapOptionDementia: { value: RealHandicap; label: string } = {
-  value: 'dementia',
-  label: 'Demence',
-}
 
 const categoryOptions: { value: QuizCategory; label: string; icon: typeof BookOpen }[] =
   [
@@ -104,11 +101,12 @@ const labelTarget: Record<TargetGroup, string> = {
 
 const labelHandicap: Record<HandicapType, string> = {
   none: 'Žádný',
-  visual_impairment: 'Zrakové postižení',
+  cognitive_dementia: 'Kognitivní (Demence)',
   dyslexia: 'Dyslexie',
-  motor_skills: 'Motorika',
-  cognitive: 'Kognitivní',
-  dementia: 'Demence',
+  visual_impairment: 'Zrakové postižení',
+  hearing_impairment: 'Sluchové postižení (Neslyšící)',
+  autism_spectrum: 'Poruchy autistického spektra',
+  czech_learners: 'Cizinci (Základy češtiny)',
 }
 
 const labelCategory: Record<QuizCategory, string> = {
@@ -200,27 +198,11 @@ export function Wizard() {
 
   const previewFlags = useMemo(() => getAccessibilityFlags(config), [config])
 
-  const advancedHandicapOptions = useMemo(
-    () =>
-      config.targetGroup === 'seniors'
-        ? [...advancedHandicapOptionsBase, handicapOptionDementia]
-        : advancedHandicapOptionsBase,
-    [config.targetGroup]
-  )
-
   const selectTargetGroup = useCallback(
     (value: TargetGroup) => {
-      if (value !== 'seniors') {
-        const next = config.handicaps.filter((h) => h !== 'dementia')
-        setConfig({
-          targetGroup: value,
-          handicaps: next.length === 0 ? ['none'] : next,
-        })
-        return
-      }
       setConfig({ targetGroup: value })
     },
-    [config.handicaps, setConfig]
+    [setConfig]
   )
 
   const goNext = useCallback(() => {
@@ -374,11 +356,6 @@ export function Wizard() {
                           id="step1-advanced-desc"
                         >
                           Volitelné — označte vše, co platí pro vaše publikum.
-                          {config.targetGroup === 'seniors' && (
-                            <span className="mt-1 block text-xs text-slate-500">
-                              U seniorů je k dispozici také volba Demence.
-                            </span>
-                          )}
                         </p>
                         <div
                           className="flex flex-col gap-2"
@@ -462,8 +439,8 @@ export function Wizard() {
                             </div>
                           </div>
                           <p className="mt-2 text-center text-xs text-slate-500">
-                            Zrakové postižení: silný kontrast · Dyslexie: font Lexend ·
-                            Motorika: větší cíle
+                            Zrak: silný kontrast · Dyslexie: font Lexend · další volby upřesňují
+                            zadání pro AI (např. jednoduchší jazyk, bez audio otázek).
                           </p>
                         </div>
                       </div>

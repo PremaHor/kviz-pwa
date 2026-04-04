@@ -29,11 +29,7 @@ export function allowedCategories(
     list = list.filter((c) => c !== 'competitive')
   }
 
-  if (targetGroup === 'seniors' && h.has('dementia')) {
-    list = list.filter((c) => c !== 'competitive')
-  }
-
-  if (h.has('cognitive')) {
+  if (h.has('cognitive_dementia')) {
     list = list.filter((c) => c !== 'competitive')
   }
 
@@ -54,7 +50,7 @@ export function allowedThemes(
     list = list.filter((t) => t !== 'pop_culture')
   }
 
-  if (h.has('dementia')) {
+  if (h.has('cognitive_dementia')) {
     list = list.filter((t) => t !== 'pop_culture' && t !== 'science')
   }
 

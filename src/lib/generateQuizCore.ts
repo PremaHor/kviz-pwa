@@ -41,17 +41,24 @@ function accessibilityHints(handicaps: QuizConfiguration['handicaps']): string {
       'Dyslexie: krátké věty, jednoduchá souvětí, běžná slova, vyhni se složitému pravopisu u nesmyslných slov.'
     )
   }
-  if (h.has('motor_skills')) {
-    parts.push('Motorika: krátké texty u možností odpovědí.')
-  }
-  if (h.has('cognitive')) {
+  if (h.has('cognitive_dementia')) {
     parts.push(
-      'Kognitivní zátěž: jedna jasná informace v otázce, nepřekombinované znění, jednoznačné odpovědi.'
+      'Kognitivní omezení / demence: jedna jasná informace v otázce, prostá slova, konkrétní kontext, pozitivní tón, krátké otázky, jednoznačné odpovědi.'
     )
   }
-  if (h.has('dementia')) {
+  if (h.has('hearing_impairment')) {
     parts.push(
-      'Demence: velmi prostá slova, konkrétní a pozitivní tón, žádné abstraktní hádanky, krátké otázky.'
+      'Neslyšící: přímý jazyk bez metafor a rčení; žádné otázky na hudbu, zvuky, hlasy ani audio vjemy.'
+    )
+  }
+  if (h.has('autism_spectrum')) {
+    parts.push(
+      'PAS: striktně logické a faktické otázky, bez sarkasmu, ironie a emočně nejednoznačných situací; žádné chytáky ze slovíčkaření.'
+    )
+  }
+  if (h.has('czech_learners')) {
+    parts.push(
+      'Cizinci (A2/B1): základní slovní zásoba, mezinárodně srozumitelné pojmy; bez lokální české popkultury a specifik.'
     )
   }
   if (parts.length === 0) {

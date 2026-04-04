@@ -38,10 +38,11 @@ function getQuestionCount(length) {
 // src/services/promptBuilder.ts
 var HANDICAP_RULES = {
   dyslexia: "PRAVIDLO PRO DYSLEXII: Pou\u017E\xEDvej v\xFDhradn\u011B b\u011B\u017En\xE1 slova a kr\xE1tk\xE9 v\u011Bty. Vyhni se ciz\xEDm slov\u016Fm, slo\u017Eit\xFDm souv\u011Bt\xEDm, dvojit\xFDm z\xE1por\u016Fm a zbyte\u010Dn\u011B t\u011B\u017Ek\xE9mu pravopisu u vymy\u0161len\xFDch odpov\u011Bd\xED.",
-  visual_impairment: "PRAVIDLO PRO ZRAKOV\xC9 POSTI\u017DEN\xCD: Ot\xE1zky nesm\xED spol\xE9hat na to, co \u201Evid\xED\u0161 na obr\xE1zku\u201C, na barvy jako jedin\xFD rozd\xEDl mezi odpov\u011B\u010Fmi ani na popis vizu\xE1ln\xEDch detail\u016F. V\u0161e mus\xED b\xFDt srozumiteln\xE9 pouze z textu (pop\u0159. zvuky, hmat, logika, b\u011B\u017En\xE9 znalosti).",
-  cognitive: "PRAVIDLO PRO KOGNITIVN\xCD OMEZEN\xCD: Jedna jasn\xE1 informace v ot\xE1zce, \u017E\xE1dn\xE9 metafory, ironie ani skryt\xE9 v\xFDznamy. Odpov\u011Bdi mus\xED b\xFDt zjevn\u011B rozli\u0161iteln\xE9.",
-  motor_skills: "PRAVIDLO PRO OMEZENOU MOTORIKU: Mo\u017Enosti odpov\u011Bd\xED pi\u0161 kr\xE1tce (p\xE1r slov), bez zbyte\u010Dn\u011B dlouh\xFDch souv\u011Bt\xED.",
-  dementia: "PRAVIDLO PRO DEMENCI / T\u011A\u017D\u0160\xCD PAM\u011A\u0164OV\xC9 OBT\xCD\u017DE: Velmi prost\xE1 slova, konkr\xE9tn\xED kontext (\u0161kola, domov, p\u0159\xEDroda). Pozitivn\xED t\xF3n, kr\xE1tk\xE9 ot\xE1zky bez abstraktn\xEDch h\xE1danek."
+  visual_impairment: "PRAVIDLO PRO ZRAKOV\xC9 POSTI\u017DEN\xCD: Ot\xE1zky nesm\xED spol\xE9hat na to, co \u201Evid\xED\u0161 na obr\xE1zku\u201C, na barvy jako jedin\xFD rozd\xEDl mezi odpov\u011B\u010Fmi ani na popis vizu\xE1ln\xEDch detail\u016F. V\u0161e mus\xED b\xFDt srozumiteln\xE9 pouze z textu (pop\u0159. hmat, logika, b\u011B\u017En\xE9 znalosti).",
+  cognitive_dementia: "PRAVIDLO PRO KOGNITIVN\xCD OMEZEN\xCD A DEMENCI: Jedna jasn\xE1 informace v ot\xE1zce, \u017E\xE1dn\xE9 metafory, ironie ani skryt\xE9 v\xFDznamy. Velmi prost\xE1 slova, konkr\xE9tn\xED kontext (\u0161kola, domov, p\u0159\xEDroda). Pozitivn\xED t\xF3n, kr\xE1tk\xE9 ot\xE1zky bez abstraktn\xEDch h\xE1danek. Odpov\u011Bdi mus\xED b\xFDt zjevn\u011B rozli\u0161iteln\xE9.",
+  hearing_impairment: "PRAVIDLO PRO NESLY\u0160\xCDC\xCD: Pou\u017E\xEDvej p\u0159\xEDm\xFD, doslovn\xFD jazyk bez metafor a r\u010Den\xED. Absolutn\u011B se vyhni ot\xE1zk\xE1m na hudbu, zvuky, hlasy nebo audio vjemy.",
+  autism_spectrum: "PRAVIDLO PRO AUTISMUS: Ot\xE1zky mus\xED b\xFDt 100% logick\xE9 a faktick\xE9. Nepou\u017E\xEDvej sarkasmus, ironii ani emo\u010Dn\u011B nejednozna\u010Dn\xE9 situace. Odpov\u011Bdi nesm\xED b\xFDt chyt\xE1ky zalo\u017Een\xE9 na slov\xED\u010Dka\u0159en\xED.",
+  czech_learners: "PRAVIDLO PRO CIZINCE: Pou\u017E\xEDvej jen z\xE1kladn\xED a mezin\xE1rodn\u011B srozumitelnou slovn\xED z\xE1sobu (A2/B1). Zcela se vyhni lok\xE1ln\xED \u010Desk\xE9 popkultu\u0159e, \u010Desk\xFDm herc\u016Fm, ve\u010Dern\xED\u010Dk\u016Fm a lok\xE1ln\xEDm specifik\u016Fm."
 };
 var WEB_INSPIRATION = {
   kids: "INSPIRACE OBSAHEM A T\xD3NEM (nevytv\xE1\u0159ej ot\xE1zky o t\u011Bchto webech jako takov\xE9; jen \xFArove\u0148 a styl): \u010CT D\xE9\u010Dko, Al\xEDk.cz, Rumvi a podobn\xE9 bezpe\u010Dn\xE9 d\u011Btsk\xE9 port\xE1ly \u2014 hrav\xFD jasn\xFD jazyk, v\u011Bk 6\u201310 let.",
@@ -137,17 +138,24 @@ function accessibilityHints(handicaps) {
       "Dyslexie: kr\xE1tk\xE9 v\u011Bty, jednoduch\xE1 souv\u011Bt\xED, b\u011B\u017En\xE1 slova, vyhni se slo\u017Eit\xE9mu pravopisu u nesmysln\xFDch slov."
     );
   }
-  if (h.has("motor_skills")) {
-    parts.push("Motorika: kr\xE1tk\xE9 texty u mo\u017Enost\xED odpov\u011Bd\xED.");
-  }
-  if (h.has("cognitive")) {
+  if (h.has("cognitive_dementia")) {
     parts.push(
-      "Kognitivn\xED z\xE1t\u011B\u017E: jedna jasn\xE1 informace v ot\xE1zce, nep\u0159ekombinovan\xE9 zn\u011Bn\xED, jednozna\u010Dn\xE9 odpov\u011Bdi."
+      "Kognitivn\xED omezen\xED / demence: jedna jasn\xE1 informace v ot\xE1zce, prost\xE1 slova, konkr\xE9tn\xED kontext, pozitivn\xED t\xF3n, kr\xE1tk\xE9 ot\xE1zky, jednozna\u010Dn\xE9 odpov\u011Bdi."
     );
   }
-  if (h.has("dementia")) {
+  if (h.has("hearing_impairment")) {
     parts.push(
-      "Demence: velmi prost\xE1 slova, konkr\xE9tn\xED a pozitivn\xED t\xF3n, \u017E\xE1dn\xE9 abstraktn\xED h\xE1danky, kr\xE1tk\xE9 ot\xE1zky."
+      "Nesly\u0161\xEDc\xED: p\u0159\xEDm\xFD jazyk bez metafor a r\u010Den\xED; \u017E\xE1dn\xE9 ot\xE1zky na hudbu, zvuky, hlasy ani audio vjemy."
+    );
+  }
+  if (h.has("autism_spectrum")) {
+    parts.push(
+      "PAS: striktn\u011B logick\xE9 a faktick\xE9 ot\xE1zky, bez sarkasmu, ironie a emo\u010Dn\u011B nejednozna\u010Dn\xFDch situac\xED; \u017E\xE1dn\xE9 chyt\xE1ky ze slov\xED\u010Dka\u0159en\xED."
+    );
+  }
+  if (h.has("czech_learners")) {
+    parts.push(
+      "Cizinci (A2/B1): z\xE1kladn\xED slovn\xED z\xE1soba, mezin\xE1rodn\u011B srozumiteln\xE9 pojmy; bez lok\xE1ln\xED \u010Desk\xE9 popkultury a specifik."
     );
   }
   if (parts.length === 0) {
@@ -363,10 +371,31 @@ var HANDICAPS = [
   "none",
   "visual_impairment",
   "dyslexia",
+  "cognitive_dementia",
+  "hearing_impairment",
+  "autism_spectrum",
+  "czech_learners"
+];
+var LEGACY_HANDICAP_KEYS = /* @__PURE__ */ new Set([
   "motor_skills",
   "cognitive",
   "dementia"
-];
+]);
+function normalizeHandicapsFromApi(strings) {
+  const set = /* @__PURE__ */ new Set();
+  for (const h of strings) {
+    if (h === "none") continue;
+    if (h === "motor_skills") continue;
+    if (h === "cognitive" || h === "dementia") {
+      set.add("cognitive_dementia");
+      continue;
+    }
+    if (HANDICAPS.includes(h) && h !== "none") {
+      set.add(h);
+    }
+  }
+  return set.size === 0 ? ["none"] : [...set];
+}
 var CATEGORIES = [
   "knowledge",
   "educational",
@@ -409,12 +438,20 @@ function parseQuizConfigurationBody(raw) {
   if (!Array.isArray(handicapsRaw)) {
     throw new Error("Neplatn\xE9 pole handicap\u016F.");
   }
-  const handicaps = handicapsRaw.filter(
-    (h) => isString(h) && HANDICAPS.includes(h)
-  );
-  if (handicaps.length !== handicapsRaw.length) {
+  const strings = handicapsRaw.filter(isString);
+  if (strings.length !== handicapsRaw.length) {
     throw new Error("Neplatn\xE1 hodnota v handicapech.");
   }
+  const allowedInput = /* @__PURE__ */ new Set([
+    ...HANDICAPS,
+    ...LEGACY_HANDICAP_KEYS
+  ]);
+  for (const h of strings) {
+    if (!allowedInput.has(h)) {
+      throw new Error("Neplatn\xE1 hodnota v handicapech.");
+    }
+  }
+  const handicaps = normalizeHandicapsFromApi(strings);
   return {
     targetGroup,
     handicaps,

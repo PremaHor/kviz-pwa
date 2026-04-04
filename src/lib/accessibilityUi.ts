@@ -3,7 +3,6 @@ import type { QuizConfiguration } from '@/types'
 export type AccessibilityFlags = {
   dyslexia: boolean
   visual: boolean
-  motor: boolean
   cognitive: boolean
 }
 
@@ -14,8 +13,10 @@ export function getAccessibilityFlags(
   return {
     dyslexia: h.has('dyslexia'),
     visual: h.has('visual_impairment'),
-    motor: h.has('motor_skills'),
-    cognitive: h.has('cognitive'),
+    cognitive:
+      h.has('cognitive_dementia') ||
+      h.has('autism_spectrum') ||
+      h.has('czech_learners'),
   }
 }
 
@@ -40,12 +41,12 @@ export function quizQuestionTitleClass(flags: AccessibilityFlags): string {
 }
 
 /** Mezery mezi možnostmi */
-export function quizOptionsGridClass(flags: AccessibilityFlags): string {
-  return flags.motor ? 'mt-5 grid gap-4' : 'mt-5 grid gap-3'
+export function quizOptionsGridClass(_flags: AccessibilityFlags): string {
+  return 'mt-5 grid gap-3'
 }
 
-export function quizOptionPaddingClass(flags: AccessibilityFlags): string {
-  return flags.motor ? 'px-4 py-5 min-h-[3.5rem]' : 'px-4 py-3'
+export function quizOptionPaddingClass(_flags: AccessibilityFlags): string {
+  return 'px-4 py-3'
 }
 
 /** Jedna možnost odpovědi — základ (bez stavu vyhodnocení) */
