@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "npx vercel dev",
     "dev:vite": "vite",
@@ -17,10 +20,10 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
-    "@vercel/node": "^3.2.29",
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@vercel/node": "^5.7.0",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",

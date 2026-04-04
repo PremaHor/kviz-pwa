@@ -1,7 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { generateQuizFromGemini } from '../src/lib/generateQuizCore'
-import { parseQuizConfigurationBody } from '../src/lib/quizConfigValidation'
-import { enrichQuizWithMedia } from '../src/services/mediaEnrichment'
 
 function parseRequestBody(req: VercelRequest): unknown {
   const b = req.body
@@ -22,9 +19,9 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  try {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
 
+  try {
     if (req.method === 'OPTIONS') {
       res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -39,13 +36,18 @@ export default async function handler(
 
     const apiKey = process.env.GEMINI_API_KEY?.trim()
     if (!apiKey) {
-      // 503 = konfigurace nasazení, ne „pád“ aplikační logiky
       res.status(503).json({
         error:
           'Server nemá nastavený GEMINI_API_KEY. Na Vercelu: Project → Settings → Environment Variables → přidej GEMINI_API_KEY (ne VITE_*). Poté Redeploy.',
       })
       return
     }
+
+    const {
+      generateQuizFromGemini,
+      parseQuizConfigurationBody,
+      enrichQuizWithMedia,
+    } = await import('../src/lib/serverQuizApi')
 
     let config: ReturnType<typeof parseQuizConfigurationBody>
     try {
@@ -89,7 +91,7 @@ export default async function handler(
         res.status(500).json({
           error: msg,
           hint:
-            'Zkontrolujte log funkce ve Vercelu (Deployments → zvolte build → Functions).',
+            'Zkontrolujte log funkce ve Vercelu (Deployments → zvolte build → Functions). Pokud je zde chyba o modulu (import), zkontrolujte build a závislosti.',
         })
       }
     } catch (sendErr) {
