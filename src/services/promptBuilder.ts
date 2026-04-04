@@ -1,4 +1,4 @@
-import type { HandicapType, QuizConfiguration, TargetGroup } from '@/types'
+import type { HandicapType, QuizConfiguration, TargetGroup } from '../types'
 
 const HANDICAP_RULES: Partial<
   Record<Exclude<HandicapType, 'none'>, string>

@@ -1,4 +1,4 @@
-import type { GeneratedQuiz, QuizConfiguration, QuizQuestion, QuizMedia } from '@/types'
+import type { GeneratedQuiz, QuizConfiguration, QuizQuestion, QuizMedia } from '../types'
 
 const COMMONS_API = 'https://commons.wikimedia.org/w/api.php'
 
@@ -52,8 +52,18 @@ const STOP_WORDS = new Set([
   'aby',
 ])
 
-function mediaEnabled(): boolean {
-  return import.meta.env.VITE_QUIZ_MEDIA !== '0'
+export type MediaEnrichmentRuntime = {
+  /** `false` = žádné dotazy Commons/Pexels */
+  enabled: boolean
+  /** Volitelný Pexels klíč (na klientovi zůstává prázdné — Pexels jen na serveru). */
+  pexelsApiKey?: string
+}
+
+function defaultClientMediaRuntime(): MediaEnrichmentRuntime {
+  return {
+    enabled: import.meta.env.VITE_QUIZ_MEDIA !== '0',
+    pexelsApiKey: undefined,
+  }
 }
 
 function sleep(ms: number): Promise<void> {
@@ -212,8 +222,11 @@ type PexelsResponse = {
   }>
 }
 
-async function fetchPexelsMedia(search: string): Promise<QuizMedia | null> {
-  const key = import.meta.env.VITE_PEXELS_API_KEY?.trim()
+async function fetchPexelsMedia(
+  search: string,
+  apiKey: string
+): Promise<QuizMedia | null> {
+  const key = apiKey.trim()
   if (!key || !search.trim()) return null
 
   const u = new URL('https://api.pexels.com/v1/search')
@@ -248,13 +261,13 @@ async function fetchPexelsMedia(search: string): Promise<QuizMedia | null> {
 
 async function resolveMediaForQuestion(
   q: QuizQuestion,
-  config: QuizConfiguration
+  config: QuizConfiguration,
+  runtime: MediaEnrichmentRuntime
 ): Promise<QuizMedia | null> {
-  const preferPexelsFirst = Boolean(
-    import.meta.env.VITE_PEXELS_API_KEY?.trim()
-  )
+  const preferPexelsFirst = Boolean(runtime.pexelsApiKey?.trim())
 
-  const tryPexels = async (s: string) => fetchPexelsMedia(s)
+  const tryPexels = async (s: string) =>
+    fetchPexelsMedia(s, runtime.pexelsApiKey ?? '')
   const tryCommons = async (s: string) => fetchCommonsMedia(s)
 
   async function tryProviders(search: string): Promise<QuizMedia | null> {
@@ -300,14 +313,16 @@ async function resolveMediaForQuestion(
 /**
  * Doplní otázky o obrázek nebo video bez druhého volání LLM.
  * Vyhledávání vede `mediaSearchHint` z Gemini (EN), jinak heuristika z českého textu.
- * Primárně Wikimedia Commons (0 Kč, bez klíče); volitelně Pexels (`VITE_PEXELS_API_KEY`).
- * Vypnout: `VITE_QUIZ_MEDIA=0`.
+ * Primárně Wikimedia Commons; volitelně Pexels (`pexelsApiKey` v runtime).
+ * Na serveru: `QUIZ_MEDIA=0` v env → předej `{ enabled: false }`.
  */
 export async function enrichQuizWithMedia(
   quiz: GeneratedQuiz,
-  config: QuizConfiguration
+  config: QuizConfiguration,
+  runtime?: MediaEnrichmentRuntime
 ): Promise<GeneratedQuiz> {
-  if (!mediaEnabled()) {
+  const env = runtime ?? defaultClientMediaRuntime()
+  if (!env.enabled) {
     return quiz
   }
 
@@ -321,7 +336,7 @@ export async function enrichQuizWithMedia(
       const i = next++
       if (i >= out.length) break
       try {
-        const media = await resolveMediaForQuestion(out[i], config)
+        const media = await resolveMediaForQuestion(out[i], config, env)
         if (media) {
           out[i] = { ...out[i], media }
         }

@@ -539,19 +539,18 @@ export function Wizard() {
                   })}
                 </div>
               </fieldset>
-              {!import.meta.env.VITE_GEMINI_API_KEY?.trim() && (
+              {import.meta.env.DEV && (
                 <div
-                  role="status"
-                  className="rounded-xl border border-amber-500/40 bg-amber-950/35 px-4 py-3 text-left text-sm text-amber-100/95"
+                  role="note"
+                  className="rounded-xl border border-sky-500/35 bg-sky-950/30 px-4 py-3 text-left text-sm text-sky-100/95"
                 >
-                  <p className="font-medium text-amber-50">Ukázkový režim</p>
-                  <p className="mt-1 text-amber-100/85">
-                    Bez klíče API se vygenerují jen dvě ukázkové otázky (délka z průvodce se u
-                    plného kvízu projektuje až po nastavení{' '}
-                    <span className="whitespace-nowrap font-mono text-xs text-amber-200">
-                      VITE_GEMINI_API_KEY
-                    </span>{' '}
-                    — viz <span className="font-mono text-xs">.env.example</span>).
+                  <p className="font-medium text-sky-50">Lokální vývoj</p>
+                  <p className="mt-1 text-sky-100/90">
+                    Pro generování z AI spusťte <span className="font-mono text-xs">npm run dev</span>{' '}
+                    (Vercel CLI včetně <span className="font-mono text-xs">/api/generate-quiz</span>).
+                    Čistý <span className="font-mono text-xs">vite</span> bez API zobrazí jen krátkou
+                    ukázku. Volitelně <span className="font-mono text-xs">VITE_DEV_MOCK=1</span> v{' '}
+                    <span className="font-mono text-xs">.env</span>.
                   </p>
                 </div>
               )}
@@ -592,11 +591,10 @@ export function Wizard() {
                 </div>
               </dl>
               <p className="text-center text-xs leading-relaxed text-slate-500">
-                {import.meta.env.VITE_GEMINI_API_KEY?.trim()
-                  ? 'Otázky a vysvětlení vygeneruje model Gemini podle tohoto nastavení. Klíč zůstává ve vašem prostředí (proměnná Vite).'
-                  : 'Po přidání klíče API se použije Google Gemini; data neukládáme na server této aplikace.'}
+                Otázky a vysvětlení připraví na serveru Google Gemini podle tohoto nastavení. Klíč k API
+                není v prohlížeči — drží ho nasazení (např. proměnné prostředí na Vercelu).
                 {import.meta.env.VITE_QUIZ_MEDIA !== '0' &&
-                  ' K otázce vygeneruje model krátký anglický popis motivu (pouze pro vyhledání obrázku); ilustraci pak dohledáme z Wikimedia Commons nebo volitelně Pexels — bez druhého běhu AI.'}
+                  ' Ilustrace doplní server z veřejných zdrojů (Wikimedia; volitelně Pexels) — bez druhého běhu AI u klienta.'}
               </p>
               <motion.button
                 type="button"

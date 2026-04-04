@@ -50,13 +50,13 @@ export function GeneratingScreen() {
           Připravuji váš kvíz
         </h1>
         <p className="mt-2 max-w-sm text-sm text-slate-500">
-          {import.meta.env.VITE_GEMINI_API_KEY?.trim()
-            ? questionCount <= 15
-              ? 'Plné generování obvykle trvá zhruba půl minuty až minutu. Netrhejte stránku.'
+          {import.meta.env.VITE_DEV_MOCK === '1'
+            ? 'Ukázkový režim — za okamžik pokračujete v hře.'
+            : questionCount <= 15
+              ? 'Generování na serveru obvykle trvá zhruba půl minuty až minutu. Netrhejte stránku.'
               : questionCount <= 25
                 ? 'U střední délky počítejte zhruba jednu až dvě minuty. Netrhejte stránku.'
-                : 'Dlouhý kvíz může generovat i několik minut. Netrhejte stránku — o výsledek nepřijdete.'
-            : 'Připravujeme ukázkový kvíz — za okamžik budete pokračovat v hře.'}
+                : 'Dlouhý kvíz může na serveru trvat i několik minut. Netrhejte stránku — o výsledek nepřijdete.'}
         </p>
         <AnimatePresence mode="wait">
           <motion.p

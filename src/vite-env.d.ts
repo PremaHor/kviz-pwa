@@ -1,18 +1,13 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Klíč z [Google AI Studio](https://aistudio.google.com/apikey) */
-  readonly VITE_GEMINI_API_KEY?: string
-  /** Výchozí: gemini-2.5-flash */
-  readonly VITE_GEMINI_MODEL?: string
   /**
-   * Volitelné — lepší fotky než jen Commons; bez klíče stačí Wikimedia (zdarma).
-   * https://www.pexels.com/api/
+   * Jen lokální vývoj bez `/api`: `1` = vždy ukázkový kvíz (žádné volání serveru).
    */
-  readonly VITE_PEXELS_API_KEY?: string
+  readonly VITE_DEV_MOCK?: string
   /**
-   * `'0'` vypne doplňování obrázků/videí (žádné dotazy na Commons/Pexels).
-   * Jinak zapnuto.
+   * Ovlivní jen doplňování obrázků u **ukázkového** kvízu v prohlížeči.
+   * Produční kvíz má média už z serveru (`QUIZ_MEDIA` tam).
    */
   readonly VITE_QUIZ_MEDIA?: string
 }
