@@ -5,6 +5,11 @@ import {
   parseQuizConfigurationBody,
 } from '../src/lib/serverQuizApi'
 
+/** Limity funkce bez `vercel.json` `functions` (soubor může chybět v gitu kvůli buildu). */
+export const config = {
+  maxDuration: 300,
+}
+
 function parseRequestBody(req: VercelRequest): unknown {
   const b = req.body
   if (b == null || (typeof b === 'string' && b.trim() === '')) {
