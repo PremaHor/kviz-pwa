@@ -6,6 +6,8 @@ import {
   Baby,
   BookOpen,
   Check,
+  ChevronDown,
+  ChevronUp,
   Gamepad2,
   GraduationCap,
   LayoutList,
@@ -40,7 +42,7 @@ import type {
 } from '@/types'
 import { useQuizStore } from '@/store/useQuizStore'
 
-const TOTAL_STEPS = 5
+const TOTAL_STEPS = 4
 
 const targetOptions: { value: TargetGroup; label: string; icon: typeof User }[] =
   [
@@ -50,15 +52,17 @@ const targetOptions: { value: TargetGroup; label: string; icon: typeof User }[] 
     { value: 'seniors', label: 'Senioři', icon: GraduationCap },
   ]
 
-const handicapOptionsBase: { value: HandicapType; label: string }[] = [
-  { value: 'none', label: 'Žádný' },
+type RealHandicap = Exclude<HandicapType, 'none'>
+
+/** Více výběr v pokročilém panelu (bez „Žádný“ — prázdný výběr = `['none']` ve store). */
+const advancedHandicapOptionsBase: { value: RealHandicap; label: string }[] = [
   { value: 'visual_impairment', label: 'Zrakové postižení' },
   { value: 'dyslexia', label: 'Dyslexie' },
   { value: 'motor_skills', label: 'Motorika' },
   { value: 'cognitive', label: 'Kognitivní' },
 ]
 
-const handicapOptionDementia: { value: HandicapType; label: string } = {
+const handicapOptionDementia: { value: RealHandicap; label: string } = {
   value: 'dementia',
   label: 'Demence',
 }
@@ -79,19 +83,16 @@ const themeOptions: { value: QuizTheme; label: string; icon: typeof Leaf }[] = [
   { value: 'pop_culture', label: 'Popkultura', icon: Gamepad2 },
 ]
 
-function toggleHandicap(
+function toggleAdvancedHandicap(
   current: HandicapType[],
-  value: HandicapType
+  value: RealHandicap
 ): HandicapType[] {
-  if (value === 'none') {
-    return ['none']
-  }
-  const withoutNone = current.filter((h) => h !== 'none')
-  if (withoutNone.includes(value)) {
-    const next = withoutNone.filter((h) => h !== value)
+  const base = current.filter((h) => h !== 'none')
+  if (base.includes(value)) {
+    const next = base.filter((h) => h !== value)
     return next.length === 0 ? ['none'] : next
   }
-  return [...withoutNone, value]
+  return [...base, value]
 }
 
 const labelTarget: Record<TargetGroup, string> = {
@@ -145,8 +146,20 @@ export function Wizard() {
   const generationError = useQuizStore((s) => s.generationError)
   const setGenerationError = useQuizStore((s) => s.setGenerationError)
 
-  const handicaps =
-    config.handicaps.length === 0 ? (['none'] as HandicapType[]) : config.handicaps
+  const [advancedAccessibilityOpen, setAdvancedAccessibilityOpen] = useState(
+    () => config.handicaps.some((h) => h !== 'none')
+  )
+
+  const activeHandicaps = useMemo(
+    () =>
+      config.handicaps.filter((h): h is RealHandicap => h !== 'none'),
+    [config.handicaps]
+  )
+
+  const handicapSummaryLabel = useMemo(() => {
+    if (activeHandicaps.length === 0) return 'Standardní (bez úprav)'
+    return activeHandicaps.map((h) => labelHandicap[h]).join(', ')
+  }, [activeHandicaps])
 
   useEffect(() => {
     const cats = allowedCategories(config.targetGroup, config.handicaps)
@@ -187,11 +200,11 @@ export function Wizard() {
 
   const previewFlags = useMemo(() => getAccessibilityFlags(config), [config])
 
-  const handicapOptions = useMemo(
+  const advancedHandicapOptions = useMemo(
     () =>
       config.targetGroup === 'seniors'
-        ? [...handicapOptionsBase, handicapOptionDementia]
-        : handicapOptionsBase,
+        ? [...advancedHandicapOptionsBase, handicapOptionDementia]
+        : advancedHandicapOptionsBase,
     [config.targetGroup]
   )
 
@@ -211,8 +224,16 @@ export function Wizard() {
   )
 
   const goNext = useCallback(() => {
-    setStep((s) => Math.min(s + 1, TOTAL_STEPS))
-  }, [])
+    setStep((s) => {
+      if (s === 1) {
+        const hasRealHandicap = config.handicaps.some((h) => h !== 'none')
+        if (!hasRealHandicap) {
+          setConfig({ handicaps: ['none'] })
+        }
+      }
+      return Math.min(s + 1, TOTAL_STEPS)
+    })
+  }, [config.handicaps, setConfig])
 
   const goBack = useCallback(() => {
     setStep((s) => Math.max(s - 1, 1))
@@ -255,8 +276,8 @@ export function Wizard() {
           Nastavení kvízu
         </h1>
         <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-slate-400">
-          Nastavte skupinu, přístupnost, typ otázek a téma — v češtině, s ohledem na potřeby
-          hráčů. V posledním kroku zvolíte délku kvízu (15, 25 nebo 35 otázek).
+          Zvolte publikum, typ otázek, téma a délku. Přístupnost můžete upřesnit v pokročilém
+          nastavení pod výběrem skupiny.
         </p>
         <div
           className="mx-auto mt-4 h-1.5 max-w-xs overflow-hidden rounded-full bg-slate-700/80"
@@ -286,9 +307,9 @@ export function Wizard() {
         >
           {step === 1 && (
             <fieldset className="space-y-4 border-0 p-0">
-              <legend className="sr-only">Cílová skupina</legend>
+              <legend className="sr-only">Cílová skupina a přístupnost</legend>
               <p className="text-center text-slate-300" id="step1-desc">
-                Vyberte cílovou skupinu
+                Kdo bude kvíz hrát?
               </p>
               <div
                 className="grid grid-cols-2 gap-3"
@@ -317,99 +338,146 @@ export function Wizard() {
                   )
                 })}
               </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAdvancedAccessibilityOpen((open) => !open)
+                  }
+                  aria-expanded={advancedAccessibilityOpen}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm transition-colors text-slate-400 hover:text-white"
+                >
+                  <span aria-hidden className="select-none text-base">
+                    ⚙️
+                  </span>
+                  <span>Pokročilé nastavení přístupnosti</span>
+                  {advancedAccessibilityOpen ? (
+                    <ChevronUp className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                  )}
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {advancedAccessibilityOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-4 border-t border-slate-700/80 pt-5">
+                        <p
+                          className="text-center text-sm text-slate-400"
+                          id="step1-advanced-desc"
+                        >
+                          Volitelné — označte vše, co platí pro vaše publikum.
+                          {config.targetGroup === 'seniors' && (
+                            <span className="mt-1 block text-xs text-slate-500">
+                              U seniorů je k dispozici také volba Demence.
+                            </span>
+                          )}
+                        </p>
+                        <div
+                          className="flex flex-col gap-2"
+                          role="group"
+                          aria-labelledby="step1-advanced-desc"
+                        >
+                          {advancedHandicapOptions.map(({ value, label }) => {
+                            const active = activeHandicaps.includes(value)
+                            return (
+                              <motion.button
+                                key={value}
+                                type="button"
+                                whileTap={{ scale: 0.99 }}
+                                onClick={() =>
+                                  setConfig({
+                                    handicaps: toggleAdvancedHandicap(
+                                      config.handicaps,
+                                      value
+                                    ),
+                                  })
+                                }
+                                aria-pressed={active}
+                                className={`flex items-center justify-between rounded-xl border-2 px-4 py-3 text-left text-sm font-medium transition-colors sm:text-base ${
+                                  active
+                                    ? 'border-indigo-400 bg-indigo-500/15 text-white'
+                                    : 'border-slate-600/80 bg-slate-800/40 text-slate-200 hover:border-slate-500'
+                                }`}
+                              >
+                                {label}
+                                {active ? (
+                                  <Check
+                                    className="h-5 w-5 shrink-0 text-indigo-400"
+                                    aria-hidden
+                                  />
+                                ) : (
+                                  <span className="h-5 w-5 shrink-0 rounded border border-slate-500" />
+                                )}
+                              </motion.button>
+                            )
+                          })}
+                        </div>
+
+                        <div className="rounded-2xl border border-dashed border-slate-600/80 bg-slate-900/30 p-4">
+                          <p
+                            className="mb-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500"
+                            id="preview-label"
+                          >
+                            Náhled zobrazení při hře
+                          </p>
+                          <div
+                            className={previewFlags.dyslexia ? 'font-dyslexia' : ''}
+                          >
+                            <div
+                              className={quizSurfaceClass(previewFlags)}
+                              aria-labelledby="preview-label"
+                            >
+                              <p className={quizQuestionTitleClass(previewFlags)}>
+                                Kolik je pootevřených oken?
+                              </p>
+                              <div
+                                className={quizOptionsGridClass(previewFlags)}
+                                role="presentation"
+                              >
+                                <div
+                                  className={`flex items-center ${quizOptionIdleClass(previewFlags)}`}
+                                >
+                                  <span className={quizOptionLabelClass(previewFlags)}>
+                                    A.
+                                  </span>
+                                  Jedno
+                                </div>
+                                <div
+                                  className={`flex items-center ${quizOptionIdleClass(previewFlags)}`}
+                                >
+                                  <span className={quizOptionLabelClass(previewFlags)}>
+                                    B.
+                                  </span>
+                                  Dvě
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="mt-2 text-center text-xs text-slate-500">
+                            Zrakové postižení: silný kontrast · Dyslexie: font Lexend ·
+                            Motorika: větší cíle
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </fieldset>
           )}
 
           {step === 2 && (
             <fieldset className="space-y-4 border-0 p-0">
-              <legend className="sr-only">Přístupnost a handicapy</legend>
-              <p className="text-center text-slate-300" id="step2-desc">
-                Vyberte všechny relevantní možnosti
-                {config.targetGroup === 'seniors' && (
-                  <span className="mt-2 block text-sm text-slate-400">
-                    U seniorů je k dispozici také volba Demence.
-                  </span>
-                )}
-              </p>
-              <div
-                className="flex flex-col gap-2"
-                role="group"
-                aria-labelledby="step2-desc"
-              >
-                {handicapOptions.map(({ value, label }) => {
-                  const active = handicaps.includes(value)
-                  return (
-                    <motion.button
-                      key={value}
-                      type="button"
-                      whileTap={{ scale: 0.99 }}
-                      onClick={() =>
-                        setConfig({ handicaps: toggleHandicap(handicaps, value) })
-                      }
-                      aria-pressed={active}
-                      className={`flex items-center justify-between rounded-xl border-2 px-4 py-3 text-left font-medium transition-colors ${
-                        active
-                          ? 'border-indigo-400 bg-indigo-500/15 text-white'
-                          : 'border-slate-600/80 bg-slate-800/40 text-slate-200 hover:border-slate-500'
-                      }`}
-                    >
-                      {label}
-                      {active ? (
-                        <Check className="h-5 w-5 shrink-0 text-indigo-400" aria-hidden />
-                      ) : (
-                        <span className="h-5 w-5 shrink-0 rounded border border-slate-500" />
-                      )}
-                    </motion.button>
-                  )
-                })}
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-dashed border-slate-600/80 bg-slate-900/30 p-4">
-                <p
-                  className="mb-3 text-left text-xs font-medium uppercase tracking-wide text-slate-500"
-                  id="preview-label"
-                >
-                  Náhled zobrazení při hře
-                </p>
-                <div className={previewFlags.dyslexia ? 'font-dyslexia' : ''}>
-                  <div
-                    className={quizSurfaceClass(previewFlags)}
-                    aria-labelledby="preview-label"
-                  >
-                    <p className={quizQuestionTitleClass(previewFlags)}>
-                      Kolik je pootevřených oken?
-                    </p>
-                    <div
-                      className={quizOptionsGridClass(previewFlags)}
-                      role="presentation"
-                    >
-                      <div
-                        className={`flex items-center ${quizOptionIdleClass(previewFlags)}`}
-                      >
-                        <span className={quizOptionLabelClass(previewFlags)}>A.</span>
-                        Jedno
-                      </div>
-                      <div
-                        className={`flex items-center ${quizOptionIdleClass(previewFlags)}`}
-                      >
-                        <span className={quizOptionLabelClass(previewFlags)}>B.</span>
-                        Dvě
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <p className="mt-2 text-center text-xs text-slate-500">
-                  Zrakové postižení: silný kontrast · Dyslexie: font Lexend ·
-                  Motorika: větší cíle
-                </p>
-              </div>
-            </fieldset>
-          )}
-
-          {step === 3 && (
-            <fieldset className="space-y-4 border-0 p-0">
               <legend className="sr-only">Kategorie kvízu</legend>
-              <p className="text-center text-slate-300" id="step3-desc">
+              <p className="text-center text-slate-300" id="step2-desc">
                 Jaký typ otázek chcete?
               </p>
               {categoryChoices.length < categoryOptions.length && (
@@ -449,10 +517,10 @@ export function Wizard() {
             </fieldset>
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             <fieldset className="space-y-4 border-0 p-0">
               <legend className="sr-only">Téma kvízu</legend>
-              <p className="text-center text-slate-300" id="step4-desc">
+              <p className="text-center text-slate-300" id="step3-desc">
                 Zvolte téma otázek
               </p>
               {themeChoices.length < themeOptions.length && (
@@ -464,7 +532,7 @@ export function Wizard() {
               <div
                 className="grid grid-cols-2 gap-3 sm:grid-cols-3"
                 role="group"
-                aria-labelledby="step4-desc"
+                aria-labelledby="step3-desc"
               >
                 {themeChoices.map(({ value, label, icon: Icon }) => {
                   const selected = config.theme === value
@@ -491,7 +559,7 @@ export function Wizard() {
             </fieldset>
           )}
 
-          {step === 5 && (
+          {step === 4 && (
             <div className="space-y-6">
               <h2 className="text-center text-lg font-semibold text-white">
                 Shrnutí
@@ -500,14 +568,14 @@ export function Wizard() {
                 <legend className="sr-only">Délka kvízu</legend>
                 <p
                   className="text-center text-slate-300"
-                  id="step5-length-desc"
+                  id="step4-length-desc"
                 >
                   Zvolte délku kvízu
                 </p>
                 <div
                   className="grid grid-cols-1 gap-3 sm:grid-cols-3"
                   role="group"
-                  aria-labelledby="step5-length-desc"
+                  aria-labelledby="step4-length-desc"
                 >
                   {quizLengthChoices.map(({ value, label, count }) => {
                     const selected = config.quizLength === value
@@ -562,9 +630,9 @@ export function Wizard() {
                   </dd>
                 </div>
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
-                  <dt className="text-slate-400">Handicapy</dt>
+                  <dt className="text-slate-400">Přístupnost</dt>
                   <dd className="font-medium text-white">
-                    {handicaps.map((h) => labelHandicap[h]).join(', ')}
+                    {handicapSummaryLabel}
                   </dd>
                 </div>
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
@@ -596,46 +664,58 @@ export function Wizard() {
                 {import.meta.env.VITE_QUIZ_MEDIA !== '0' &&
                   ' Ilustrace doplní server z veřejných zdrojů (Wikimedia; volitelně Pexels) — bez druhého běhu AI u klienta.'}
               </p>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleCreate}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 px-5 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-500/25 transition-colors hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
-              >
-                <Sparkles className="h-5 w-5" aria-hidden />
-                Vytvořit kvíz
-              </motion.button>
             </div>
           )}
         </motion.div>
       </AnimatePresence>
 
-      {step < 5 && (
-        <nav
-          className="mt-8 flex items-center justify-between gap-3"
-          aria-label="Kroky průvodce"
+      <nav
+        className={`mt-8 flex items-center gap-3 ${
+          step < TOTAL_STEPS ? 'justify-between' : 'justify-start'
+        }`}
+        aria-label="Kroky průvodce"
+      >
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.98 }}
+          onClick={goBack}
+          disabled={step === 1}
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800/60 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700/80 disabled:pointer-events-none disabled:opacity-40"
         >
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.98 }}
-            onClick={goBack}
-            disabled={step === 1}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800/60 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700/80 disabled:pointer-events-none disabled:opacity-40"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Zpět
-          </motion.button>
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Zpět
+        </motion.button>
+        {step < TOTAL_STEPS ? (
           <motion.button
             type="button"
             whileTap={{ scale: 0.98 }}
             onClick={goNext}
             className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-400"
           >
-            Další
+            Další krok
             <ArrowRight className="h-4 w-4" aria-hidden />
           </motion.button>
-        </nav>
+        ) : null}
+      </nav>
+
+      {step === TOTAL_STEPS && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="mt-6"
+        >
+          <motion.button
+            type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleCreate}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 px-5 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-500/25 transition-colors hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+          >
+            <Sparkles className="h-5 w-5" aria-hidden />
+            Vytvořit kvíz
+          </motion.button>
+        </motion.div>
       )}
     </div>
   )
