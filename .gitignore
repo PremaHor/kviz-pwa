@@ -1,0 +1,9 @@
+node_modules
+dist
+*.local
+.DS_Store
+
+# Tajné klíče a lokální konfigurace — na GitHub patří jen .env.example (šablona bez hodnot)
+.env
+.env.*
+!.env.example
