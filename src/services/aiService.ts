@@ -28,7 +28,7 @@ function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
           'Toto je ukázková otázka. Spusť `npm run dev` (Vercel + Vite) nebo nasaď na Vercel s GEMINI_API_KEY.',
         options: ['Rozumím', 'Ne', 'Možná', 'Nevím'],
         correctAnswerIndex: 0,
-        mediaSearchHint: 'laptop computer programming',
+        imageContextPrompt: 'cozy study desk with warm lamp',
         explanation:
           'Plné kvízy generuje server `/api/generate-quiz`. Lokálně použij příkaz z README; na Vercelu nastav GEMINI_API_KEY v Environment Variables.',
       },
@@ -42,7 +42,7 @@ function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
           'Žádné',
         ],
         correctAnswerIndex: 0,
-        mediaSearchHint: MOCK_THEME_MEDIA_HINT[config.theme],
+        imageContextPrompt: MOCK_THEME_MEDIA_HINT[config.theme],
         explanation: `V konfiguraci je téma: ${
           config.theme === 'custom'
             ? config.customThemeText.trim() || 'vlastní (prázdné)'

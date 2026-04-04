@@ -205,6 +205,12 @@ function buildQuestionFormatBlock(config2) {
   }
   return "";
 }
+var IMAGE_CONTEXT_RULES_CS = `PRAVIDLO PRO OBR\xC1ZKY (KRITICK\xC9):
+Pro ka\u017Edou ot\xE1zku vygeneruj do pole 'imageContextPrompt' textov\xFD popis obr\xE1zku (v angli\u010Dtin\u011B, max 5-8 slov). 
+Tento obr\xE1zek MUS\xCD navodit atmosf\xE9ru ot\xE1zky, ale ABSOLUTN\u011A NESM\xCD obsahovat nebo nazna\u010Dovat spr\xE1vnou odpov\u011B\u010F!
+P\u0159\xEDklad 1: Pokud je ot\xE1zka 'Kdo napsal Babi\u010Dku?', imageContextPrompt bude: 'old rustic spinning wheel in a wooden cottage' (NE portr\xE9t spisovatelky).
+P\u0159\xEDklad 2: Pokud je ot\xE1zka 'Kter\xE9 zv\xED\u0159e m\xE1 pruhy?', imageContextPrompt bude: 'african savanna landscape at sunset' (NE zebra).
+Obr\xE1zek mus\xED ilustrovat 'm\xEDsto' nebo 'n\xE1stroj' souvisej\xEDc\xED s t\xE9matem, nikdy ne samotn\xFD p\u0159edm\u011Bt ot\xE1zky.`;
 function sanitizeCustomThemeForPrompt(raw) {
   return raw.trim().slice(0, 500).replace(/'/g, "\u2019").replace(/\s+/g, " ");
 }
@@ -267,6 +273,9 @@ function buildPromptEnrichment(config2) {
       "=== FORM\xC1T OT\xC1ZEK (STRUKTURA A TYP OTAZEK) ===\n\n" + questionFormatBlock
     );
   }
+  parts.push(
+    "=== PRAVIDLO PRO OBR\xC1ZKY ===\n\n" + IMAGE_CONTEXT_RULES_CS
+  );
   parts.push(
     "=== T\xC9MA (OBSAHOV\xDD Z\xC1M\u011AR) ===\n\n" + buildThemeInstructionBlock(config2)
   );
@@ -349,7 +358,8 @@ ${accessibilityHints(config2.handicaps)}
 - "correctAnswerIndex" je 0, 1, 2 nebo 3 \u2014 index spr\xE1vn\xE9 mo\u017Enosti.
 - "id" u ot\xE1zek: q1, q2, \u2026 a\u017E q${questionCount}.
 - V textech ot\xE1zek a odpov\u011Bd\xED \u017E\xE1dn\xE9 URL ani odkazy \u2014 pouze b\u011B\u017En\xFD text v \u010De\u0161tin\u011B.
-- U ka\u017Ed\xE9 ot\xE1zky mus\xED b\xFDt "mediaSearchHint": 2 a\u017E 8 anglick\xFDch slov popisuj\xEDc\xEDch hlavn\xED vizu\xE1ln\xED motiv pro ilustraci (konkr\xE9tn\xED v\u011Bc, m\xEDsto, \u017Eivo\u010Dich, p\u0159edm\u011Bt nebo zn\xE1m\xE1 osoba z kontextu ot\xE1zky). Pouze p\xEDsmena anglick\xE9 abecedy, \u010D\xEDsla a mezery \u2014 \u017E\xE1dn\xE1 \u010De\u0161tina, \u017E\xE1dn\xE1 cel\xE1 v\u011Bta, \u017E\xE1dn\xE9 uvozov\xE9 v\u011Bty. Mus\xED \xFAzce souviset s obsahem ot\xE1zky (typicky kl\xED\u010Dov\xE9 slovo ze spr\xE1vn\xE9 odpov\u011Bdi nebo z jej\xEDho zn\u011Bn\xED). P\u0159\xEDklady: "red squirrel", "Charles Bridge Prague", "volleyball net beach".
+- Ka\u017Ed\xE1 ot\xE1zka MUS\xCD m\xEDt povinn\xE9 pole "imageContextPrompt" p\u0159esn\u011B podle sekce PRAVIDLO PRO OBR\xC1ZKY v\xFD\u0161e (anglicky, kr\xE1tk\xE1 fr\xE1ze pro vyhled\xE1n\xED ilustrace bez spoileru).
+- JSON struktura ka\u017Ed\xE9 polo\u017Eky v "questions": id, questionText, options (4 \u0159et\u011Bzce), correctAnswerIndex, explanation, imageContextPrompt.
 - Odpov\u011Bdi a\u0165 jsou fakticky spr\xE1vn\xE9 a v souladu s t\xE9matem.`;
 }
 function quizResponseJsonSchema(_questionCount) {
@@ -364,14 +374,14 @@ function quizResponseJsonSchema(_questionCount) {
       },
       correctAnswerIndex: { type: "integer" },
       explanation: { type: "string" },
-      mediaSearchHint: { type: "string" }
+      imageContextPrompt: { type: "string" }
     },
     required: [
       "questionText",
       "options",
       "correctAnswerIndex",
       "explanation",
-      "mediaSearchHint"
+      "imageContextPrompt"
     ]
   };
   return {
@@ -406,15 +416,16 @@ function normalizeQuestion(q, index) {
   if (typeof idx !== "number" || idx < 0 || idx > 3 || !Number.isInteger(idx))
     return null;
   if (!questionText) return null;
-  const hintRaw = typeof o.mediaSearchHint === "string" ? o.mediaSearchHint.trim() : "";
-  const mediaSearchHint = hintRaw.length > 0 ? hintRaw.slice(0, 120) : void 0;
+  const imageRaw = typeof o.imageContextPrompt === "string" ? o.imageContextPrompt.trim() : typeof o.mediaSearchHint === "string" ? o.mediaSearchHint.trim() : "";
+  if (!imageRaw) return null;
+  const imageContextPrompt = imageRaw.slice(0, 200);
   return {
     id,
     questionText,
     options: options.map((s) => String(s).trim()),
     correctAnswerIndex: idx,
     explanation: explanation || "Spr\xE1vn\xE1 odpov\u011B\u010F odpov\xEDd\xE1 zad\xE1n\xED.",
-    ...mediaSearchHint ? { mediaSearchHint } : {}
+    imageContextPrompt
   };
 }
 function parseGeneratedQuiz(raw, expectedQuestionCount) {
@@ -479,7 +490,7 @@ async function generateQuizFromGemini(config2, opts) {
     systemInstruction: {
       parts: [
         {
-          text: "Jsi gener\xE1tor vzd\u011Bl\xE1vac\xEDch kv\xEDz\u016F. Odpov\xEDd\xE1\u0161 v\xFDhradn\u011B strukturovan\xFDm JSON podle zadan\xE9ho sch\xE9matu a pokyn\u016F u\u017Eivatele. Ve\u0161ker\xFD obsah pro hr\xE1\u010De pi\u0161 v \u010De\u0161tin\u011B; pole mediaSearchHint je v\xFDjimka \u2014 pouze kr\xE1tk\xE1 anglick\xE1 fr\xE1ze pro vyhled\xE1n\xED ilustrace, nikdy \u010Desky."
+          text: "Jsi gener\xE1tor vzd\u011Bl\xE1vac\xEDch kv\xEDz\u016F. Odpov\xEDd\xE1\u0161 v\xFDhradn\u011B strukturovan\xFDm JSON podle zadan\xE9ho sch\xE9matu a pokyn\u016F u\u017Eivatele. Ve\u0161ker\xFD obsah pro hr\xE1\u010De pi\u0161 v \u010De\u0161tin\u011B; pole imageContextPrompt je v\xFDjimka \u2014 pouze kr\xE1tk\xFD anglick\xFD popis bezpe\u010Dn\xE9 ilustrace (atmosf\xE9ra bez spoileru), nikdy \u010Desky."
         }
       ]
     },
@@ -707,13 +718,8 @@ function sanitizeMediaSearchHint(raw) {
 function buildHeuristicMediaQuery(q, theme) {
   const normalized = q.questionText.replace(/[?!.:;,""""''()[\]{}«»]/g, " ").replace(/\s+/g, " ").trim();
   const words = normalized.split(" ").map((w74) => w74.trim()).filter((w) => w.length > 2 && !STOP_WORDS.has(w.toLowerCase()));
-  const fromQuestion = words.slice(0, 6).join(" ");
-  const correct = String(q.options[q.correctAnswerIndex] ?? "").replace(/[?!.:;,]/g, " ").trim();
-  const correctWords = correct.split(/\s+/).filter((w) => w.length > 2 && !STOP_WORDS.has(w.toLowerCase()));
-  const fromCorrect = correctWords.slice(0, 4).join(" ");
-  const merged = [fromQuestion, fromCorrect].filter(Boolean).join(" ").trim();
-  const uniqueWords = [...new Set(merged.split(/\s+/).filter(Boolean))];
-  let query = uniqueWords.length > 0 ? uniqueWords.join(" ") : THEME_FALLBACK_EN[theme];
+  const fromQuestion = words.slice(0, 8).join(" ");
+  let query = fromQuestion.length > 0 ? fromQuestion : THEME_FALLBACK_EN[theme];
   if (query.length < 2) {
     query = THEME_FALLBACK_EN[theme];
   }
@@ -821,7 +827,7 @@ async function resolveMediaForQuestion(q, config2, runtime) {
     }
     return await tryCommons(search) ?? await tryPexels(search);
   }
-  const hint = q.mediaSearchHint != null && q.mediaSearchHint.length > 0 ? sanitizeMediaSearchHint(q.mediaSearchHint) : null;
+  const primary = q.imageContextPrompt != null && q.imageContextPrompt.length > 0 ? sanitizeMediaSearchHint(q.imageContextPrompt) : null;
   const heuristic = buildHeuristicMediaQuery(q, config2.theme);
   const thematic = THEME_FALLBACK_EN[config2.theme];
   const attempts = [];
@@ -832,7 +838,7 @@ async function resolveMediaForQuestion(q, config2, runtime) {
     seen.add(k);
     attempts.push(s);
   };
-  if (hint) add(hint);
+  if (primary) add(primary);
   add(heuristic);
   add(thematic);
   for (const search of attempts) {

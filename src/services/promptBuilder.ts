@@ -97,6 +97,14 @@ function buildQuestionFormatBlock(config: QuizConfiguration): string {
   return ''
 }
 
+/** Přesné znění pro user prompt — pravidla bezpečných ilustrací bez spoilerů. */
+export const IMAGE_CONTEXT_RULES_CS = `PRAVIDLO PRO OBRÁZKY (KRITICKÉ):
+Pro každou otázku vygeneruj do pole 'imageContextPrompt' textový popis obrázku (v angličtině, max 5-8 slov). 
+Tento obrázek MUSÍ navodit atmosféru otázky, ale ABSOLUTNĚ NESMÍ obsahovat nebo naznačovat správnou odpověď!
+Příklad 1: Pokud je otázka 'Kdo napsal Babičku?', imageContextPrompt bude: 'old rustic spinning wheel in a wooden cottage' (NE portrét spisovatelky).
+Příklad 2: Pokud je otázka 'Které zvíře má pruhy?', imageContextPrompt bude: 'african savanna landscape at sunset' (NE zebra).
+Obrázek musí ilustrovat 'místo' nebo 'nástroj' související s tématem, nikdy ne samotný předmět otázky.`
+
 function sanitizeCustomThemeForPrompt(raw: string): string {
   return raw
     .trim()
@@ -180,6 +188,10 @@ export function buildPromptEnrichment(config: QuizConfiguration): string {
       '=== FORMÁT OTÁZEK (STRUKTURA A TYP OTAZEK) ===\n\n' + questionFormatBlock
     )
   }
+
+  parts.push(
+    '=== PRAVIDLO PRO OBRÁZKY ===\n\n' + IMAGE_CONTEXT_RULES_CS
+  )
 
   parts.push(
     '=== TÉMA (OBSAHOVÝ ZÁMĚR) ===\n\n' + buildThemeInstructionBlock(config)

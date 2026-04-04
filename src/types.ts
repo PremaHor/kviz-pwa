@@ -72,10 +72,10 @@ export interface QuizQuestion {
   correctAnswerIndex: number
   explanation: string
   /**
-   * Krátké anglické klíčové slovo/spojení pro vyhledání ilustrace (vyplní Gemini).
-   * Nepoužívá se v zobrazení otázky uživateli.
+   * Krátký anglický popis bezpečného obrázku pro vyhledání ilustrace (vyplní model).
+   * Atmosféra / téma — nesmí prozradit správnou odpověď. Nepoužívá se jako text otázky.
    */
-  mediaSearchHint?: string
+  imageContextPrompt: string
   /** Vyplní se po generování levným vyhledáním médií (ne z AI). */
   media?: QuizMedia
 }

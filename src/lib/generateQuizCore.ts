@@ -80,7 +80,8 @@ ${accessibilityHints(config.handicaps)}
 - "correctAnswerIndex" je 0, 1, 2 nebo 3 — index správné možnosti.
 - "id" u otázek: q1, q2, … až q${questionCount}.
 - V textech otázek a odpovědí žádné URL ani odkazy — pouze běžný text v češtině.
-- U každé otázky musí být "mediaSearchHint": 2 až 8 anglických slov popisujících hlavní vizuální motiv pro ilustraci (konkrétní věc, místo, živočich, předmět nebo známá osoba z kontextu otázky). Pouze písmena anglické abecedy, čísla a mezery — žádná čeština, žádná celá věta, žádné uvozové věty. Musí úzce souviset s obsahem otázky (typicky klíčové slovo ze správné odpovědi nebo z jejího znění). Příklady: "red squirrel", "Charles Bridge Prague", "volleyball net beach".
+- Každá otázka MUSÍ mít povinné pole "imageContextPrompt" přesně podle sekce PRAVIDLO PRO OBRÁZKY výše (anglicky, krátká fráze pro vyhledání ilustrace bez spoileru).
+- JSON struktura každé položky v "questions": id, questionText, options (4 řetězce), correctAnswerIndex, explanation, imageContextPrompt.
 - Odpovědi ať jsou fakticky správné a v souladu s tématem.`
 }
 
@@ -103,14 +104,14 @@ export function quizResponseJsonSchema(
       },
       correctAnswerIndex: { type: 'integer' },
       explanation: { type: 'string' },
-      mediaSearchHint: { type: 'string' },
+      imageContextPrompt: { type: 'string' },
     },
     required: [
       'questionText',
       'options',
       'correctAnswerIndex',
       'explanation',
-      'mediaSearchHint',
+      'imageContextPrompt',
     ],
   }
   return {
@@ -149,10 +150,14 @@ function normalizeQuestion(q: unknown, index: number): QuizQuestion | null {
   if (typeof idx !== 'number' || idx < 0 || idx > 3 || !Number.isInteger(idx))
     return null
   if (!questionText) return null
-  const hintRaw =
-    typeof o.mediaSearchHint === 'string' ? o.mediaSearchHint.trim() : ''
-  const mediaSearchHint =
-    hintRaw.length > 0 ? hintRaw.slice(0, 120) : undefined
+  const imageRaw =
+    typeof o.imageContextPrompt === 'string'
+      ? o.imageContextPrompt.trim()
+      : typeof o.mediaSearchHint === 'string'
+        ? o.mediaSearchHint.trim()
+        : ''
+  if (!imageRaw) return null
+  const imageContextPrompt = imageRaw.slice(0, 200)
   return {
     id,
     questionText,
@@ -164,7 +169,7 @@ function normalizeQuestion(q: unknown, index: number): QuizQuestion | null {
     ],
     correctAnswerIndex: idx,
     explanation: explanation || 'Správná odpověď odpovídá zadání.',
-    ...(mediaSearchHint ? { mediaSearchHint } : {}),
+    imageContextPrompt,
   }
 }
 
@@ -267,7 +272,7 @@ export async function generateQuizFromGemini(
     systemInstruction: {
       parts: [
         {
-          text: 'Jsi generátor vzdělávacích kvízů. Odpovídáš výhradně strukturovaným JSON podle zadaného schématu a pokynů uživatele. Veškerý obsah pro hráče piš v češtině; pole mediaSearchHint je výjimka — pouze krátká anglická fráze pro vyhledání ilustrace, nikdy česky.',
+          text: 'Jsi generátor vzdělávacích kvízů. Odpovídáš výhradně strukturovaným JSON podle zadaného schématu a pokynů uživatele. Veškerý obsah pro hráče piš v češtině; pole imageContextPrompt je výjimka — pouze krátký anglický popis bezpečné ilustrace (atmosféra bez spoileru), nikdy česky.',
         },
       ],
     },

@@ -87,7 +87,10 @@ function sanitizeMediaSearchHint(raw: string): string | null {
   return t
 }
 
-/** Záložní dotaz bez hintu od modelu: český text otázky + správná možnost. */
+/**
+ * Záložní dotaz bez platného imageContextPrompt: jen slova z textu otázky
+ * (nikoli ze správné odpovědi — předejde spoilerům ve vyhledávání).
+ */
 function buildHeuristicMediaQuery(
   q: QuizQuestion,
   theme: QuizConfiguration['theme']
@@ -102,20 +105,10 @@ function buildHeuristicMediaQuery(
     .map((w74) => w74.trim())
     .filter((w) => w.length > 2 && !STOP_WORDS.has(w.toLowerCase()))
 
-  const fromQuestion = words.slice(0, 6).join(' ')
+  const fromQuestion = words.slice(0, 8).join(' ')
 
-  const correct = String(q.options[q.correctAnswerIndex] ?? '')
-    .replace(/[?!.:;,]/g, ' ')
-    .trim()
-  const correctWords = correct
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP_WORDS.has(w.toLowerCase()))
-  const fromCorrect = correctWords.slice(0, 4).join(' ')
-
-  const merged = [fromQuestion, fromCorrect].filter(Boolean).join(' ').trim()
-  const uniqueWords = [...new Set(merged.split(/\s+/).filter(Boolean))]
   let query =
-    uniqueWords.length > 0 ? uniqueWords.join(' ') : THEME_FALLBACK_EN[theme]
+    fromQuestion.length > 0 ? fromQuestion : THEME_FALLBACK_EN[theme]
 
   if (query.length < 2) {
     query = THEME_FALLBACK_EN[theme]
@@ -288,9 +281,9 @@ async function resolveMediaForQuestion(
     )
   }
 
-  const hint =
-    q.mediaSearchHint != null && q.mediaSearchHint.length > 0
-      ? sanitizeMediaSearchHint(q.mediaSearchHint)
+  const primary =
+    q.imageContextPrompt != null && q.imageContextPrompt.length > 0
+      ? sanitizeMediaSearchHint(q.imageContextPrompt)
       : null
   const heuristic = buildHeuristicMediaQuery(q, config.theme)
   const thematic = THEME_FALLBACK_EN[config.theme]
@@ -304,7 +297,7 @@ async function resolveMediaForQuestion(
     attempts.push(s)
   }
 
-  if (hint) add(hint)
+  if (primary) add(primary)
   add(heuristic)
   add(thematic)
 
@@ -319,7 +312,7 @@ async function resolveMediaForQuestion(
 
 /**
  * Doplní otázky o obrázek nebo video bez druhého volání LLM.
- * Vyhledávání vede `mediaSearchHint` z Gemini (EN), jinak heuristika z českého textu.
+ * Vyhledávání vede `imageContextPrompt` z modelu (EN), jinak heuristika jen z textu otázky (bez správné odpovědi).
  * Primárně Wikimedia Commons; volitelně Pexels (`pexelsApiKey` v runtime).
  * Na serveru: `QUIZ_MEDIA=0` v env → předej `{ enabled: false }`.
  */
