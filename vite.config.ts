@@ -12,6 +12,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
+      workbox: {
+        // Ať `/api/*` nikdy nepadá na offline fallback / index.html (PWA + serverless).
+        navigateFallbackDenylist: [/^\/api\//],
+      },
       manifest: {
         name: 'Kvíz na míru',
         short_name: 'Kvíz na míru',

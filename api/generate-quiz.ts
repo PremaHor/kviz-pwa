@@ -3,48 +3,61 @@ import { generateQuizFromGemini } from '../src/lib/generateQuizCore'
 import { parseQuizConfigurationBody } from '../src/lib/quizConfigValidation'
 import { enrichQuizWithMedia } from '../src/services/mediaEnrichment'
 
+function parseRequestBody(req: VercelRequest): unknown {
+  const b = req.body
+  if (b == null || (typeof b === 'string' && b.trim() === '')) {
+    return undefined
+  }
+  if (typeof b === 'string') {
+    return JSON.parse(b) as unknown
+  }
+  if (Buffer.isBuffer(b)) {
+    const s = b.toString('utf8').trim()
+    return s ? (JSON.parse(s) as unknown) : undefined
+  }
+  return b
+}
+
 export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ): Promise<void> {
-  res.setHeader('Content-Type', 'application/json; charset=utf-8')
-
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-    res.status(204).end()
-    return
-  }
-
-  if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Metoda není povolena.' })
-    return
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY?.trim()
-  if (!apiKey) {
-    res.status(500).json({
-      error:
-        'Chybí GEMINI_API_KEY na serveru. V nastavení Vercelu přidej proměnnou prostředí (bez prefixu VITE_).',
-    })
-    return
-  }
-
-  let config: ReturnType<typeof parseQuizConfigurationBody>
   try {
-    const body =
-      typeof req.body === 'string'
-        ? (JSON.parse(req.body) as unknown)
-        : req.body
-    config = parseQuizConfigurationBody(body)
-  } catch (e) {
-    const msg =
-      e instanceof Error ? e.message : 'Neplatný JSON nebo struktura těla.'
-    res.status(400).json({ error: msg })
-    return
-  }
+    res.setHeader('Content-Type', 'application/json; charset=utf-8')
 
-  try {
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+      res.status(204).end()
+      return
+    }
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Metoda není povolena.' })
+      return
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY?.trim()
+    if (!apiKey) {
+      // 503 = konfigurace nasazení, ne „pád“ aplikační logiky
+      res.status(503).json({
+        error:
+          'Server nemá nastavený GEMINI_API_KEY. Na Vercelu: Project → Settings → Environment Variables → přidej GEMINI_API_KEY (ne VITE_*). Poté Redeploy.',
+      })
+      return
+    }
+
+    let config: ReturnType<typeof parseQuizConfigurationBody>
+    try {
+      const body = parseRequestBody(req)
+      config = parseQuizConfigurationBody(body)
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : 'Neplatný JSON nebo struktura těla.'
+      res.status(400).json({ error: msg })
+      return
+    }
+
     const model = process.env.GEMINI_MODEL?.trim()
     let quiz = await generateQuizFromGemini(config, { apiKey, model })
 
@@ -57,8 +70,15 @@ export default async function handler(
 
     res.status(200).json(quiz)
   } catch (e) {
+    console.error('[api/generate-quiz]', e)
     const msg =
-      e instanceof Error ? e.message : 'Generování kvízu se nezdařilo.'
-    res.status(502).json({ error: msg })
+      e instanceof Error ? e.message : 'Neočekávaná chyba serveru.'
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: msg,
+        hint:
+          'Zkontrolujte log funkce ve Vercelu (Deployments → zvolte build → Functions).',
+      })
+    }
   }
 }
