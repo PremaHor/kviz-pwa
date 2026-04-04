@@ -56,29 +56,59 @@ function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
   }
 }
 
+function parseJsonResponse(text: string, status: number): unknown {
+  const trimmed = text.replace(/^\uFEFF/, '').trim()
+  if (!trimmed) {
+    if (status >= 400) {
+      throw new Error(
+        `Server odpověděl ${status} s prázdným tělem. Zkontroluj log funkce na Vercelu (GEMINI_API_KEY, timeout).`
+      )
+    }
+    throw new Error('Server vrátil prázdnou odpověď.')
+  }
+
+  const looksHtml =
+    trimmed.startsWith('<!') ||
+    trimmed.startsWith('<html') ||
+    trimmed.toLowerCase().includes('<!doctype html')
+
+  if (looksHtml) {
+    throw new Error(
+      'Server vrátil HTML místo JSON — často to znamená, že požadavek na /api/generate-quiz nedorazil do serverové funkce (SPA fallback, starý service worker, nebo špatné nasazení). Zkuste tvrdý obnovení stránky (Ctrl+Shift+R) nebo v prohlížeči zrušit „aplikaci“ / vyčistit data webu. Na Vercelu ověřte, že existuje funkce api/generate-quiz a že je nastavený GEMINI_API_KEY.'
+    )
+  }
+
+  try {
+    return JSON.parse(trimmed) as unknown
+  } catch {
+    throw new Error(
+      `Odpověď není platný JSON (HTTP ${status}). Začátek: ${trimmed.slice(0, 120).replace(/\s+/g, ' ')}…`
+    )
+  }
+}
+
 async function fetchQuizFromApi(
   config: QuizConfiguration
 ): Promise<GeneratedQuiz> {
   const res = await fetch('/api/generate-quiz', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
     body: JSON.stringify(config),
+    cache: 'no-store',
   })
 
   const text = await res.text()
-  let data: unknown
-  try {
-    data = text ? JSON.parse(text) : null
-  } catch {
-    throw new Error('Neplatná odpověď serveru (není JSON).')
-  }
+  const data = parseJsonResponse(text, res.status)
 
   if (!res.ok) {
     const err =
-      data && typeof data === 'object' && 'error' in data
+      data && typeof data === 'object' && data !== null && 'error' in data
         ? String((data as { error: unknown }).error)
-        : res.statusText
-    throw new Error(err || `Chyba serveru (${res.status}).`)
+        : `Chyba serveru (${res.status}).`
+    throw new Error(err)
   }
 
   if (
