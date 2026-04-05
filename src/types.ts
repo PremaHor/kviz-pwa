@@ -4,7 +4,7 @@ export type HandicapType =
   | 'none'
   | 'visual_impairment'
   | 'dyslexia'
-  | /** Kognitivní omezení a/nebo demence — jedna volba v průvodci */
+  | /** Kognitivní omezení a/nebo demence, jedna volba v průvodci */
   'cognitive_dementia'
   | 'hearing_impairment'
   | 'autism_spectrum'
@@ -12,7 +12,7 @@ export type HandicapType =
 
 export type QuizCategory = 'knowledge' | 'educational' | 'fun' | 'competitive'
 
-/** Téma kvízu — dynamicky podle publika + speciální volby. */
+/** Téma kvízu, dynamicky podle publika a speciálních voleb. */
 export type QuizTheme =
   | 'kid_seasonal'
   | 'kid_animals'
@@ -33,7 +33,7 @@ export type QuizTheme =
   | 'random'
   | 'custom'
 
-/** Délka kvízu — počet otázek určuje `getQuestionCount` v `lib/quizLength`. */
+/** Délka kvízu; počet otázek určuje `getQuestionCount` v `lib/quizLength`. */
 export type QuizLength = 'short' | 'medium' | 'long'
 
 export interface QuizConfiguration {
@@ -46,7 +46,7 @@ export interface QuizConfiguration {
   quizLength: QuizLength
 }
 
-/** Ilustrace bez dalšího LLM — doplňuje se z Wikimedia Commons / volitelně Pexels. */
+/** Ilustrace bez dalšího LLM, doplňuje se z Wikimedia Commons nebo volitelně Pexels. */
 export type QuizMedia =
   | {
       kind: 'image'
@@ -73,7 +73,7 @@ export interface QuizQuestion {
   explanation: string
   /**
    * Krátký anglický popis bezpečného obrázku pro vyhledání ilustrace (vyplní model).
-   * Atmosféra / téma — nesmí prozradit správnou odpověď. Nepoužívá se jako text otázky.
+   * Atmosféra / téma nesmí prozradit správnou odpověď. Nepoužívá se jako text otázky.
    */
   imageContextPrompt: string
   /** Vyplní se po generování levným vyhledáním médií (ne z AI). */

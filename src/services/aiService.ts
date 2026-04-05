@@ -7,7 +7,7 @@ const MOCK_THEME_MEDIA_HINT = THEME_MEDIA_HINT_EN
 
 function mockQuizTitle(config: QuizConfiguration): string {
   if (config.theme === 'random') {
-    return 'Kvíz — překvapení (ukázka — API neběží)'
+    return 'Překvap mě! (ukázka, API neběží)'
   }
   if (config.theme === 'custom') {
     const t = config.customThemeText.trim().slice(0, 36)
@@ -15,7 +15,7 @@ function mockQuizTitle(config: QuizConfiguration): string {
       ? `${t}${config.customThemeText.trim().length > 36 ? '…' : ''} (ukázka)`
       : 'Vlastní téma (ukázka)'
   }
-  return `${THEME_LABEL_CS[config.theme]} (ukázka — API neběží)`
+  return `${THEME_LABEL_CS[config.theme]} (ukázka, API neběží)`
 }
 
 function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
@@ -92,7 +92,7 @@ function humanizeApiError(
   const parts = [main, hint].filter(
     (p, i, a) => p.length > 0 && a.indexOf(p) === i
   )
-  return parts.length > 0 ? parts.join(' — ') : `Chyba serveru (${status}).`
+  return parts.length > 0 ? parts.join('. ') : `Chyba serveru (${status}).`
 }
 
 function parseJsonResponse(text: string, status: number): unknown {
@@ -113,7 +113,7 @@ function parseJsonResponse(text: string, status: number): unknown {
 
   if (looksHtml) {
     throw new Error(
-      'Server vrátil HTML místo JSON — často to znamená, že požadavek na /api/generate-quiz nedorazil do serverové funkce (SPA fallback, starý service worker, nebo špatné nasazení). Zkuste tvrdý obnovení stránky (Ctrl+Shift+R) nebo v prohlížeči zrušit „aplikaci“ / vyčistit data webu. Na Vercelu ověřte, že existuje funkce api/generate-quiz a že je nastavený GEMINI_API_KEY.'
+      'Server vrátil HTML místo JSON. Často to znamená, že požadavek na /api/generate-quiz nedorazil do serverové funkce (SPA fallback, starý service worker nebo špatné nasazení). Zkuste tvrdé obnovení stránky (Ctrl+Shift+R) nebo v prohlížeči zrušit „aplikaci“ a vyčistit data webu. Na Vercelu ověřte, že existuje funkce api/generate-quiz a že je nastavený GEMINI_API_KEY.'
     )
   }
 
@@ -145,7 +145,7 @@ async function fetchQuizFromApi(
   if (!res.ok) {
     if (res.status === 404) {
       throw new Error(
-        'Server vrátil 404 u /api/generate-quiz — funkce není na tomto nasazení dostupná. Ověř na Vercelu záložku Functions a že v repozitáři je api/generate-quiz.js (přegeneruje se při npm run build).'
+        'Server vrátil 404 u /api/generate-quiz. Funkce není na tomto nasazení dostupná. Ověř na Vercelu záložku Functions a že v repozitáři je api/generate-quiz.js (přegeneruje se při npm run build).'
       )
     }
     throw new Error(humanizeApiError(data, res.status))
@@ -175,7 +175,7 @@ export async function generateQuiz(
 ): Promise<GeneratedQuiz> {
   if (useOfflineMockFallback()) {
     console.warn(
-      '[kvíz] VITE_DEV_MOCK=1 — používám lokální ukázkový kvíz bez API.'
+      '[kvíz] VITE_DEV_MOCK=1: používám lokální ukázkový kvíz bez API.'
     )
     await new Promise((r) => setTimeout(r, 600))
     const quiz = generateQuizMock(config)

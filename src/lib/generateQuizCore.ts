@@ -1,6 +1,6 @@
 /**
  * Sdílená logika generování kvízu (prompt, schéma, volání Gemini, parsování).
- * Bez import.meta — vhodné pro Node (Vercel Function) i potenciální klienta.
+ * Bez import.meta, vhodné pro Node (Vercel Function) i potenciální klienta.
  */
 import type { GeneratedQuiz, QuizConfiguration, QuizQuestion } from '../types'
 import { compactThemeSummary } from './themeWizardOptions'
@@ -8,17 +8,17 @@ import { getQuestionCount } from './quizLength'
 import { buildPromptEnrichment } from '../services/promptBuilder'
 
 const CATEGORY_CS: Record<QuizConfiguration['category'], string> = {
-  knowledge: 'Vědomostní — ověření faktů a znalostí',
-  educational: 'Výukové — vysvětlení pojmů, naučný tón',
-  fun: 'Zábavné — lehký tón, zajímavosti',
-  competitive: 'Soutěžní — jasné znění, vhodné pro rychlé rozhodování',
+  knowledge: 'Vědomostní: ověření faktů a znalostí',
+  educational: 'Výukové: vysvětlení pojmů, naučný tón',
+  fun: 'Zábavné: lehký tón, zajímavosti',
+  competitive: 'Soutěžní: jasné znění, vhodné pro rychlé rozhodování',
 }
 
 const TARGET_CS: Record<QuizConfiguration['targetGroup'], string> = {
-  kids: 'Děti (cca 6–10 let) — jednoduchá slova, konkrétní příklady',
-  juniors: 'Junioři / mladší teenageři — střední obtížnost',
-  adults: 'Dospělí — běžná obtížnost',
-  seniors: 'Senioři — srozumitelné věty, klidné tempo, konkrétní kontext',
+  kids: 'Děti (cca 6 až 10 let): jednoduchá slova, konkrétní příklady',
+  juniors: 'Junioři / mladší teenageři: střední obtížnost',
+  adults: 'Dospělí: běžná obtížnost',
+  seniors: 'Senioři: srozumitelné věty, klidné tempo, konkrétní kontext',
 }
 
 function accessibilityHints(handicaps: QuizConfiguration['handicaps']): string {
@@ -70,23 +70,32 @@ ${buildPromptEnrichment(config)}
 Vytvoř jeden kvíz v češtině. Výstup musí přesně odpovídat JSON schématu (žádný text mimo JSON).
 
 Požadavky na obsah:
-- Přesně ${questionCount} otázek v poli "questions" — každá má jiné znění, žádné duplicity ani opakování stejného faktu.
+- Přesně ${questionCount} otázek v poli "questions". Každá má jiné znění, žádné duplicity ani opakování stejného faktu.
 - Téma obsahu: ${compactThemeSummary(config)}
 - Styl: ${CATEGORY_CS[config.category]}
 - Cílová skupina: ${TARGET_CS[config.targetGroup]}
 - Přístupnost:
 ${accessibilityHints(config.handicaps)}
 - Každá otázka má přesně 4 řetězce v "options".
-- "correctAnswerIndex" je 0, 1, 2 nebo 3 — index správné možnosti.
+- "correctAnswerIndex" je 0, 1, 2 nebo 3, tedy index správné možnosti. Správná odpověď musí být náhodně rozložena mezi otázkami (používej všechny pozice, nepreferuj vždy první možnost / index 0).
 - "id" u otázek: q1, q2, … až q${questionCount}.
-- V textech otázek a odpovědí žádné URL ani odkazy — pouze běžný text v češtině.
+- V textech otázek a odpovědí žádné URL ani odkazy, pouze běžný text v češtině.
 - Každá otázka MUSÍ mít povinné pole "imageContextPrompt" přesně podle sekce PRAVIDLO PRO OBRÁZKY výše (anglicky, krátká fráze pro vyhledání ilustrace bez spoileru).
 - JSON struktura každé položky v "questions": id, questionText, options (4 řetězce), correctAnswerIndex, explanation, imageContextPrompt.
-- Odpovědi ať jsou fakticky správné a v souladu s tématem.`
+- Striktně dodržuj sekci FAKTICKÁ PŘESNOST výše: správná odpověď i distraktory musí být logicky konzistentní; žádné halucinované „fakta“.`
+}
+
+/** Nižší teplota u faktických režimů a vlastního tématu snižuje halucinace. */
+export function quizGenerationTemperature(config: QuizConfiguration): number {
+  if (config.theme === 'custom') return 0.34
+  if (config.category === 'knowledge' || config.category === 'educational') {
+    return 0.34
+  }
+  return 0.65
 }
 
 /**
- * Minimální JSON Schema pro Gemini — bez min/max délky polí a bez minimum/maximum u čísel.
+ * Minimální JSON Schema pro Gemini, bez min/max délky polí a bez minimum/maximum u čísel.
  * Přesný počet otázek a 4 možnosti validuje `parseGeneratedQuiz` (jinak API 400:
  * „schema produces a constraint that has too many states“).
  */
@@ -173,6 +182,29 @@ function normalizeQuestion(q: unknown, index: number): QuizQuestion | null {
   }
 }
 
+/** Náhodně zamíchá pořadí možností, aby model neměl bias na „vždy A“ (index 0). */
+function shuffleQuestionOptions(question: QuizQuestion): QuizQuestion {
+  const tagged = question.options.map((text, i) => ({
+    text,
+    correct: i === question.correctAnswerIndex,
+  }))
+  for (let i = tagged.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[tagged[i], tagged[j]] = [tagged[j], tagged[i]]
+  }
+  const correctAnswerIndex = tagged.findIndex((t) => t.correct)
+  return {
+    ...question,
+    options: tagged.map((t) => t.text) as [
+      string,
+      string,
+      string,
+      string,
+    ],
+    correctAnswerIndex,
+  }
+}
+
 export function parseGeneratedQuiz(
   raw: unknown,
   expectedQuestionCount: number
@@ -197,7 +229,9 @@ export function parseGeneratedQuiz(
     if (!nq) {
       throw new Error(`Neplatná otázka č. ${i + 1} ve struktuře AI.`)
     }
-    questions.push({ ...nq, id: `q${i + 1}` })
+    questions.push(
+      shuffleQuestionOptions({ ...nq, id: `q${i + 1}` })
+    )
   }
   if (!title) {
     throw new Error('Neplatná odpověď AI (chybí název kvízu).')
@@ -237,7 +271,7 @@ export interface GeminiCallOpts {
 }
 
 /**
- * Volitelné thinking — jen když je `GEMINI_THINKING_BUDGET` číslo (např. 0).
+ * Volitelné thinking, jen když je `GEMINI_THINKING_BUDGET` číslo (např. 0).
  * Výchozí je vynechat, protože u modelů bez „thinking“ API jinak vrací 400.
  */
 function geminiThinkingConfigFromEnv():
@@ -272,7 +306,7 @@ export async function generateQuizFromGemini(
     systemInstruction: {
       parts: [
         {
-          text: 'Jsi generátor vzdělávacích kvízů. Odpovídáš výhradně strukturovaným JSON podle zadaného schématu a pokynů uživatele. Veškerý obsah pro hráče piš v češtině; pole imageContextPrompt je výjimka — pouze krátký anglický popis bezpečné ilustrace (atmosféra bez spoileru), nikdy česky.',
+          text: 'Jsi generátor vzdělávacích kvízů. Odpovídáš výhradně strukturovaným JSON podle zadaného schématu a pokynů uživatele. Veškerý obsah pro hráče piš v češtině; pole imageContextPrompt je výjimka, pouze krátký anglický popis bezpečné ilustrace (atmosféra bez spoileru), nikdy česky. U faktických otázek musí být správná odpověď skutečně pravdivá; pokud si nejsi jistý detailem, nepoužívej ho, zvol jednoznačnější otázku.',
         },
       ],
     },
@@ -283,7 +317,7 @@ export async function generateQuizFromGemini(
       },
     ],
     generationConfig: {
-      temperature: 0.65,
+      temperature: quizGenerationTemperature(config),
       maxOutputTokens: maxOutputTokensForQuiz(questionCount),
       responseMimeType: 'application/json',
       responseJsonSchema: quizResponseJsonSchema(questionCount),

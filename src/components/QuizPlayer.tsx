@@ -50,6 +50,19 @@ export function QuizPlayer() {
   const total = quiz?.questions.length ?? 0
   const isLast = index >= total - 1
   const slot = perQuestion[index]
+
+  const { correctSoFar, answeredSoFar } = useMemo(() => {
+    if (!quiz) return { correctSoFar: 0, answeredSoFar: 0 }
+    let correct = 0
+    let answered = 0
+    for (let i = 0; i < quiz.questions.length; i++) {
+      const s = perQuestion[i]
+      if (!s?.revealed || s.selected === null) continue
+      answered += 1
+      if (s.selected === quiz.questions[i].correctAnswerIndex) correct += 1
+    }
+    return { correctSoFar: correct, answeredSoFar: answered }
+  }, [quiz, perQuestion])
   const selected = slot?.selected ?? null
   const revealed = slot?.revealed ?? false
 
@@ -196,9 +209,19 @@ export function QuizPlayer() {
           <ArrowLeft className={iconSize} aria-hidden />
           Zpět
         </motion.button>
-        <p className="order-last w-full text-center text-lg font-bold tracking-wide text-amber-200/95 md:order-none md:w-auto md:text-xl">
-          Otázka {index + 1} z {total}
-        </p>
+        <div className="order-last flex w-full flex-col items-center gap-1 text-center md:order-none md:w-auto">
+          <p className="text-lg font-bold tracking-wide text-amber-200/95 md:text-xl">
+            Otázka {index + 1} z {total}
+          </p>
+          <p
+            className="text-sm font-semibold tabular-nums text-emerald-300/95 md:text-base"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            Správně: {correctSoFar}
+            {answeredSoFar > 0 ? ` z ${answeredSoFar}` : ''}
+          </p>
+        </div>
         <motion.button
           type="button"
           whileTap={{ scale: 0.98 }}
@@ -215,11 +238,15 @@ export function QuizPlayer() {
           {quiz.title}
         </p>
         <p className="mb-6 max-w-3xl text-center text-xs text-slate-600 md:text-sm">
-          Klávesnice: <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">1</kbd>–
-          <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">4</kbd> odpověď ·{' '}
-          <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">Mezerník</kbd> /{' '}
+          Klávesnice: klávesy{' '}
+          <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">1</kbd>
+          {' až '}
+          <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">4</kbd>
+          {' '}
+          vyberou odpověď ·{' '}
+          <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">Mezerník</kbd> nebo{' '}
           <kbd className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-slate-300">Enter</kbd>{' '}
-          odhalit nebo pokračovat
+          odhalí odpověď nebo pokračuje
         </p>
 
         <AnimatePresence mode="wait">
@@ -392,7 +419,7 @@ export function QuizPlayer() {
                     {isLast ? 'Zobrazit výsledky' : 'Další otázka'}
                   </motion.button>
                   <p className="mt-3 text-center text-sm text-slate-500">
-                    Mezerník nebo Enter — pokračovat
+                    Mezerník nebo Enter: pokračovat
                   </p>
                 </motion.div>
               )}

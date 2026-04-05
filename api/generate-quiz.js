@@ -46,7 +46,7 @@ var THEME_OPTIONS = {
     { value: "ad_science_tech", label: "V\u011Bda a technika" }
   ],
   seniors: [
-    { value: "sr_retro_6080", label: "Retro (60.\u201380. l\xE9ta)" },
+    { value: "sr_retro_6080", label: "Retro (60. a\u017E 80. l\xE9ta)" },
     { value: "sr_golden_czech_hands", label: "Zlat\xE9 \u010Desk\xE9 ru\u010Di\u010Dky" },
     { value: "sr_nature_herbs", label: "P\u0159\xEDroda a bylinky" },
     { value: "sr_history_local", label: "Historie a m\xEDstopis" }
@@ -80,7 +80,7 @@ var THEME_LABEL_CS = {
   ad_travel_geography: "Cestov\xE1n\xED a geografie",
   ad_history_culture: "Historie a kultura",
   ad_science_tech: "V\u011Bda a technika",
-  sr_retro_6080: "Retro (60.\u201380. l\xE9ta)",
+  sr_retro_6080: "Retro (60. a\u017E 80. l\xE9ta)",
   sr_golden_czech_hands: "Zlat\xE9 \u010Desk\xE9 ru\u010Di\u010Dky",
   sr_nature_herbs: "P\u0159\xEDroda a bylinky",
   sr_history_local: "Historie a m\xEDstopis",
@@ -145,10 +145,10 @@ var HANDICAP_RULES = {
   czech_learners: "PRAVIDLO PRO CIZINCE: Pou\u017E\xEDvej jen z\xE1kladn\xED a mezin\xE1rodn\u011B srozumitelnou slovn\xED z\xE1sobu (A2/B1). Zcela se vyhni lok\xE1ln\xED \u010Desk\xE9 popkultu\u0159e, \u010Desk\xFDm herc\u016Fm, ve\u010Dern\xED\u010Dk\u016Fm a lok\xE1ln\xEDm specifik\u016Fm."
 };
 var WEB_INSPIRATION = {
-  kids: "INSPIRACE OBSAHEM A T\xD3NEM (nevytv\xE1\u0159ej ot\xE1zky o t\u011Bchto webech jako takov\xE9; jen \xFArove\u0148 a styl): \u010CT D\xE9\u010Dko, Al\xEDk.cz, Rumvi a podobn\xE9 bezpe\u010Dn\xE9 d\u011Btsk\xE9 port\xE1ly \u2014 hrav\xFD jasn\xFD jazyk, v\u011Bk 6\u201310 let.",
-  juniors: "INSPIRACE: YouTube/TikTok (kulturn\u011B vhodn\xE9), hern\xED novinky, Kahoot, streamovac\xED sc\xE9na \u2014 svi\u017En\xFD t\xF3n teenagera, ale bez nebezpe\u010Dn\xFDch v\xFDzev a vulg\xE1rn\xEDch mem\u016F.",
-  adults: "INSPIRACE: zpravodajsk\xE9 a magaz\xEDnov\xE9 weby (nap\u0159. Novinky, iDNES), hobby port\xE1ly, hospodsk\xFD kv\xEDz, CSFD/Kinobox u popkultury \u2014 dosp\u011Bl\xFD neutr\xE1ln\xED a\u017E m\xEDrn\u011B vt\xEDpk\xE1\u0159sk\xFD t\xF3n.",
-  seniors: "INSPIRACE: \u010Cesk\xFD rozhlas (Plus, Dvojka), region\xE1ln\xED zpravodajstv\xED, t\xE9mata zahrady, zvyky, pam\u011Bti na ml\xE1d\xED \u2014 klidn\xFD, respektuj\xEDc\xED t\xF3n bez modern\xEDho slangu."
+  kids: "INSPIRACE OBSAHEM A T\xD3NEM (nevytv\xE1\u0159ej ot\xE1zky o t\u011Bchto webech jako takov\xE9; jen \xFArove\u0148 a styl): \u010CT D\xE9\u010Dko, Al\xEDk.cz, Rumvi a podobn\xE9 bezpe\u010Dn\xE9 d\u011Btsk\xE9 port\xE1ly. Hrav\xFD jasn\xFD jazyk, v\u011Bk zhruba 6 a\u017E 10 let.",
+  juniors: "INSPIRACE: YouTube/TikTok (kulturn\u011B vhodn\xE9), hern\xED novinky, Kahoot, streamovac\xED sc\xE9na. Svi\u017En\xFD t\xF3n teenagera, ale bez nebezpe\u010Dn\xFDch v\xFDzev a vulg\xE1rn\xEDch mem\u016F.",
+  adults: "INSPIRACE: zpravodajsk\xE9 a magaz\xEDnov\xE9 weby (nap\u0159. Novinky, iDNES), hobby port\xE1ly, hospodsk\xFD kv\xEDz, CSFD/Kinobox u popkultury. Dosp\u011Bl\xFD neutr\xE1ln\xED a\u017E m\xEDrn\u011B vt\xEDpk\xE1\u0159sk\xFD t\xF3n.",
+  seniors: "INSPIRACE: \u010Cesk\xFD rozhlas (Plus, Dvojka), region\xE1ln\xED zpravodajstv\xED, t\xE9mata zahrady, zvyky, pam\u011Bti na ml\xE1d\xED. Klidn\xFD, respektuj\xEDc\xED t\xF3n bez modern\xEDho slangu."
 };
 function buildHandicapRulesBlock(handicaps) {
   const lines = handicaps.filter((h) => h !== "none").map((h) => HANDICAP_RULES[h]).filter((x) => Boolean(x));
@@ -197,7 +197,7 @@ function buildQuestionFormatBlock(config2) {
       return `FORM\xC1T OT\xC1ZEK: Respektuj\xEDc\xED v\u011Bdomostn\xED test ve stylu po\u0159adu AZ Kv\xEDz. Zam\u011B\u0159 se na 'krystalizovanou inteligenci': \u010Deskoslovensk\xE1 historie 20. stolet\xED, zem\u011Bpis, klasick\xE1 literatura a v\xFDznamn\xE9 osobnosti. Ot\xE1zky mus\xED b\xFDt d\u016Fstojn\xE9 a bez chyt\xE1k\u016F.`;
     }
     if (category === "fun") {
-      return `FORM\xC1T OT\xC1ZEK: Nostalgie a spole\u010Dn\xE9 vzpom\xEDn\xE1n\xED. Vytv\xE1\u0159ej ot\xE1zky typu 'Stroj \u010Dasu' (ceny zbo\u017E\xED a ka\u017Edodenn\xED \u017Eivot v letech 1960-1980), dopl\u0148ov\xE1n\xED text\u016F zn\xE1m\xFDch lidov\xFDch nebo popul\xE1rn\xEDch p\xEDsn\xED z t\xE9 doby a dopl\u0148ov\xE1n\xED \u010Desk\xFDch p\u0159\xEDslov\xED.`;
+      return `FORM\xC1T OT\xC1ZEK: Nostalgie a spole\u010Dn\xE9 vzpom\xEDn\xE1n\xED. Vytv\xE1\u0159ej ot\xE1zky typu 'Stroj \u010Dasu' (ceny zbo\u017E\xED a ka\u017Edodenn\xED \u017Eivot v letech 1960 a\u017E 1980), dopl\u0148ov\xE1n\xED text\u016F zn\xE1m\xFDch lidov\xFDch nebo popul\xE1rn\xEDch p\xEDsn\xED z t\xE9 doby a dopl\u0148ov\xE1n\xED \u010Desk\xFDch p\u0159\xEDslov\xED.`;
     }
     if (category === "educational") {
       return `FORM\xC1T OT\xC1ZEK: Pojmi to jako jemn\xFD tr\xE9nink pam\u011Bti a objevov\xE1n\xED. T\xE9mata jako p\u0159\xEDroda, bylink\xE1\u0159stv\xED, tradi\u010Dn\xED recepty z babi\u010D\u010Diny kucha\u0159ky nebo star\xE1 \u0159emesla. Do pole 'explanation' napi\u0161 velmi laskav\xE9 a zaj\xEDmav\xE9 dopln\u011Bn\xED kontextu k dan\xE9 v\u011Bci.`;
@@ -206,11 +206,17 @@ function buildQuestionFormatBlock(config2) {
   return "";
 }
 var IMAGE_CONTEXT_RULES_CS = `PRAVIDLO PRO OBR\xC1ZKY (KRITICK\xC9):
-Pro ka\u017Edou ot\xE1zku vygeneruj do pole 'imageContextPrompt' textov\xFD popis obr\xE1zku (v angli\u010Dtin\u011B, max 5-8 slov). 
+Pro ka\u017Edou ot\xE1zku vygeneruj do pole 'imageContextPrompt' textov\xFD popis obr\xE1zku (v angli\u010Dtin\u011B, max 5 a\u017E 8 slov). 
 Tento obr\xE1zek MUS\xCD navodit atmosf\xE9ru ot\xE1zky, ale ABSOLUTN\u011A NESM\xCD obsahovat nebo nazna\u010Dovat spr\xE1vnou odpov\u011B\u010F!
 P\u0159\xEDklad 1: Pokud je ot\xE1zka 'Kdo napsal Babi\u010Dku?', imageContextPrompt bude: 'old rustic spinning wheel in a wooden cottage' (NE portr\xE9t spisovatelky).
 P\u0159\xEDklad 2: Pokud je ot\xE1zka 'Kter\xE9 zv\xED\u0159e m\xE1 pruhy?', imageContextPrompt bude: 'african savanna landscape at sunset' (NE zebra).
 Obr\xE1zek mus\xED ilustrovat 'm\xEDsto' nebo 'n\xE1stroj' souvisej\xEDc\xED s t\xE9matem, nikdy ne samotn\xFD p\u0159edm\u011Bt ot\xE1zky.`;
+var FACTUAL_ACCURACY_RULES_CS = `PRAVIDLA FAKTICK\xC9 P\u0158ESNOSTI (KRITICK\xC9):
+- Generuj pouze tvrzen\xED, u kter\xFDch jsi si jist\xFD: b\u011B\u017En\u011B ov\u011B\u0159iteln\xE1 fakta (zn\xE1m\xE1 d\xEDla, osobnosti, hrub\xE9 souvislosti). Nevym\xFD\u0161lej konkr\xE9tn\xED roky, d\xEDl\u010D\xED epizody, vedlej\u0161\xED postavy ani detaily, pokud si nejsi jist\xFD.
+- Pokud si nejsi jist\xFD p\u0159esn\xFDm \xFAdajem, zjednodu\u0161 ot\xE1zku na obecn\u011B platn\xFD a jednozna\u010Dn\xFD fakt, nebo ji p\u0159eformuluj. Rad\u011Bji obecn\u011Bji ne\u017E chybn\u011B konkr\xE9tn\u011B.
+- Nespr\xE1vn\xE9 mo\u017Enosti (distraktory) mus\xED b\xFDt zjevn\u011B chybn\xE9 nebo jednozna\u010Dn\u011B odli\u0161n\xE9 od spr\xE1vn\xE9 odpov\u011Bdi; nepou\u017E\xEDvej dal\u0161\xED \u201Epravd\u011Bpodobn\xE9\u201C vymy\u0161len\xE9 varianty, kter\xE9 by mohly b\xFDt klamav\u011B spr\xE1vn\xE9.
+- Do pole 'explanation' v\u017Edy stru\u010Dn\u011B dopl\u0148 kontext podporuj\xEDc\xED spr\xE1vnou odpov\u011B\u010F (nap\u0159. n\xE1zev d\xEDla, obdob\xED); nep\u0159id\xE1vej smy\u0161len\xE9 detaily ani nejist\xE1 tvrzen\xED.`;
+var CUSTOM_THEME_FACTUAL_ADDON_CS = `DODATEK PRO VLASTN\xCD T\xC9MA: T\xE9ma je u\u017Eivatelsky zvolen\xE9 a m\u016F\u017Ee b\xFDt \xFAzk\xE9 nebo odborn\xE9 (nap\u0159. \xE9ra, \u017E\xE1nr, region\xE1ln\xED kultura, star\u0161\xED \u010Desk\xFD film). Dr\u017E se nejzn\xE1m\u011Bj\u0161\xEDch a nejdokumentovan\u011Bj\u0161\xEDch fakt\u016F z dan\xE9ho oboru. Vyhni se obskurn\xEDm titul\u016Fm a z\xE1ludnostem z okraje znalost\xED. U kinematografie, literatury a historie preferuj etablovan\xE9 klasiky a v\u0161eobecn\u011B sd\xEDlen\xE9 re\xE1lie.`;
 function sanitizeCustomThemeForPrompt(raw) {
   return raw.trim().slice(0, 500).replace(/'/g, "\u2019").replace(/\s+/g, " ");
 }
@@ -220,7 +226,9 @@ function buildThemeInstructionBlock(config2) {
   }
   if (config2.theme === "custom") {
     const t = sanitizeCustomThemeForPrompt(config2.customThemeText);
-    return `T\xC9MA: Kv\xEDz se mus\xED striktn\u011B a do hloubky t\xFDkat tohoto vlastn\xEDho t\xE9matu: '${t}'.`;
+    return `T\xC9MA: Kv\xEDz se mus\xED striktn\u011B a do hloubky t\xFDkat tohoto vlastn\xEDho t\xE9matu: '${t}'.
+
+${CUSTOM_THEME_FACTUAL_ADDON_CS}`;
   }
   return `T\xC9MA: Zam\u011B\u0159 se na specifickou oblast: ${config2.theme}.`;
 }
@@ -230,7 +238,7 @@ function buildWebInspirationBlock(config2) {
   const extra = [base];
   if (h.has("dyslexia")) {
     extra.push(
-      "Dopl\u0148uj\xEDc\xED styl: jazyk jako v p\u0159\xEDstupn\xFDch \u010Dl\xE1nc\xEDch pro \u0161irok\xE9 publikum \u2014 kr\xE1tk\xE9 odstavce my\u0161lenkov\u011B, jednoduch\xE1 souv\u011Bt\xED."
+      "Dopl\u0148uj\xEDc\xED styl: jazyk jako v p\u0159\xEDstupn\xFDch \u010Dl\xE1nc\xEDch pro \u0161irok\xE9 publikum, kr\xE1tk\xE9 odstavce my\u0161lenkov\u011B, jednoduch\xE1 souv\u011Bt\xED."
     );
   }
   return "=== INSPIRACE RE\xC1LN\xDDMI WEBY A M\xC9DII (jen t\xF3n a t\xE9mata) ===\n\n" + extra.join("\n\n");
@@ -241,16 +249,16 @@ function buildPersonaBlock(config2) {
     return `TVOJE ROLE: Z\xE1bavn\xFD moder\xE1tor d\u011Btsk\xE9ho po\u0159adu ve stylu \u010CT D\xE9\u010Dko nebo Al\xEDk.cz. STYL: Hrav\xFD humor, zv\xED\u0159\xE1tka, poh\xE1dky, absurdn\xED ale ne d\u011Bsiv\xE9 situace. Z\xC1KAZ: such\xE1 encyklopedick\xE1 fakta bez p\u0159\xEDb\u011Bhu. Mo\u017Enosti odpov\u011Bd\xED a\u0165 d\xE1vaj\xED smysl d\xEDt\u011Bti a bav\xED.`;
   }
   if (targetGroup === "kids" && category === "educational") {
-    return `TVOJE ROLE: U\u010Ditel/ka 1. stupn\u011B Z\u0160 \u2014 vl\xEDdn\u011B a trp\u011Bliv\u011B jako ve v\xFDukov\xFDch bloc\xEDch na D\xE9\u010Dku nebo Rumvi. STYL: Nau\u010Dn\xE9, ale v\u017Edy s jednoduch\xFDm p\u0159\xEDkladem nebo p\u0159irovn\xE1n\xEDm z d\u011Btsk\xE9ho sv\u011Bta. \u017D\xE1dn\xE9 odborn\xE9 term\xEDny bez vysv\u011Btlen\xED.`;
+    return `TVOJE ROLE: U\u010Ditel/ka 1. stupn\u011B Z\u0160, vl\xEDdn\u011B a trp\u011Bliv\u011B jako ve v\xFDukov\xFDch bloc\xEDch na D\xE9\u010Dku nebo Rumvi. STYL: Nau\u010Dn\xE9, ale v\u017Edy s jednoduch\xFDm p\u0159\xEDkladem nebo p\u0159irovn\xE1n\xEDm z d\u011Btsk\xE9ho sv\u011Bta. \u017D\xE1dn\xE9 odborn\xE9 term\xEDny bez vysv\u011Btlen\xED.`;
   }
   if (targetGroup === "kids" && category === "knowledge") {
-    return `TVOJE ROLE: Tv\u016Frce d\u011Btsk\xE9ho v\u011Bdomostn\xEDho kv\xEDzu (6\u201310 let). STYL: Konkr\xE9tn\xED ot\xE1zky ze \u017Eivota zv\xED\u0159at, p\u0159\xEDrody, sv\xE1tk\u016F, sportu pro d\u011Bti. Obt\xED\u017Enost v\u017Edy \xFAm\u011Brn\xE1 v\u011Bku \u2014 \u017E\xE1dn\xE9 re\xE1lie z politiky \u010Di finan\u010Dn\xEDch produkt\u016F.`;
+    return `TVOJE ROLE: Tv\u016Frce d\u011Btsk\xE9ho v\u011Bdomostn\xEDho kv\xEDzu (6 a\u017E 10 let). STYL: Konkr\xE9tn\xED ot\xE1zky ze \u017Eivota zv\xED\u0159at, p\u0159\xEDrody, sv\xE1tk\u016F, sportu pro d\u011Bti. Obt\xED\u017Enost v\u017Edy \xFAm\u011Brn\xE1 v\u011Bku, \u017E\xE1dn\xE9 re\xE1lie z politiky \u010Di finan\u010Dn\xEDch produkt\u016F.`;
   }
   if (targetGroup === "juniors" && category === "competitive") {
-    return `TVOJE ROLE: Tv\u016Frce rychl\xFDch viralov\xFDch v\xFDzev ve stylu Kahoot a Hern\xEDch kan\xE1l\u016F. STYL: \xDAdern\xE9 v\u011Bty, gaming, filmy, seri\xE1ly, sporty \u2014 lehk\xE1 ironie je v po\u0159\xE1dku, obsah mus\xED z\u016Fstat slu\u0161n\xFD.`;
+    return `TVOJE ROLE: Tv\u016Frce rychl\xFDch viralov\xFDch v\xFDzev ve stylu Kahoot a Hern\xEDch kan\xE1l\u016F. STYL: \xDAdern\xE9 v\u011Bty, gaming, filmy, seri\xE1ly, sporty. Lehk\xE1 ironie je v po\u0159\xE1dku, obsah mus\xED z\u016Fstat slu\u0161n\xFD.`;
   }
   if (targetGroup === "juniors") {
-    return `TVOJE ROLE: Moder\xE1tor kv\xEDzu pro teenagery (cca 12\u201316 let). STYL: Srozumiteln\xFD, \u017Eiv\xFD, m\u016F\u017Ee\u0161 ob\u010Das nar\xE1\u017Eet na \u0161kolu, sporty, technologie a popkulturu v m\xED\u0159e vhodn\xE9 pro ml\xE1de\u017E.`;
+    return `TVOJE ROLE: Moder\xE1tor kv\xEDzu pro teenagery (cca 12 a\u017E 16 let). STYL: Srozumiteln\xFD, \u017Eiv\xFD, m\u016F\u017Ee\u0161 ob\u010Das nar\xE1\u017Eet na \u0161kolu, sporty, technologie a popkulturu v m\xED\u0159e vhodn\xE9 pro ml\xE1de\u017E.`;
   }
   if (targetGroup === "adults" && (category === "fun" || category === "competitive")) {
     return `TVOJE ROLE: Moder\xE1tor hospodsk\xE9ho kv\xEDzu nebo sout\u011B\u017En\xEDho po\u0159adu. STYL: Chyt\xE1ky a zaj\xEDmav\xE1 fakta, m\xEDrn\xE1 ironie, propojen\xED historie a popkultury.`;
@@ -277,6 +285,9 @@ function buildPromptEnrichment(config2) {
     "=== PRAVIDLO PRO OBR\xC1ZKY ===\n\n" + IMAGE_CONTEXT_RULES_CS
   );
   parts.push(
+    "=== FAKTICK\xC1 P\u0158ESNOST ===\n\n" + FACTUAL_ACCURACY_RULES_CS
+  );
+  parts.push(
     "=== T\xC9MA (OBSAHOV\xDD Z\xC1M\u011AR) ===\n\n" + buildThemeInstructionBlock(config2)
   );
   const handicapBlock = buildHandicapRulesBlock(config2.handicaps);
@@ -289,16 +300,16 @@ function buildPromptEnrichment(config2) {
 
 // src/lib/generateQuizCore.ts
 var CATEGORY_CS = {
-  knowledge: "V\u011Bdomostn\xED \u2014 ov\u011B\u0159en\xED fakt\u016F a znalost\xED",
-  educational: "V\xFDukov\xE9 \u2014 vysv\u011Btlen\xED pojm\u016F, nau\u010Dn\xFD t\xF3n",
-  fun: "Z\xE1bavn\xE9 \u2014 lehk\xFD t\xF3n, zaj\xEDmavosti",
-  competitive: "Sout\u011B\u017En\xED \u2014 jasn\xE9 zn\u011Bn\xED, vhodn\xE9 pro rychl\xE9 rozhodov\xE1n\xED"
+  knowledge: "V\u011Bdomostn\xED: ov\u011B\u0159en\xED fakt\u016F a znalost\xED",
+  educational: "V\xFDukov\xE9: vysv\u011Btlen\xED pojm\u016F, nau\u010Dn\xFD t\xF3n",
+  fun: "Z\xE1bavn\xE9: lehk\xFD t\xF3n, zaj\xEDmavosti",
+  competitive: "Sout\u011B\u017En\xED: jasn\xE9 zn\u011Bn\xED, vhodn\xE9 pro rychl\xE9 rozhodov\xE1n\xED"
 };
 var TARGET_CS = {
-  kids: "D\u011Bti (cca 6\u201310 let) \u2014 jednoduch\xE1 slova, konkr\xE9tn\xED p\u0159\xEDklady",
-  juniors: "Junio\u0159i / mlad\u0161\xED teenage\u0159i \u2014 st\u0159edn\xED obt\xED\u017Enost",
-  adults: "Dosp\u011Bl\xED \u2014 b\u011B\u017En\xE1 obt\xED\u017Enost",
-  seniors: "Senio\u0159i \u2014 srozumiteln\xE9 v\u011Bty, klidn\xE9 tempo, konkr\xE9tn\xED kontext"
+  kids: "D\u011Bti (cca 6 a\u017E 10 let): jednoduch\xE1 slova, konkr\xE9tn\xED p\u0159\xEDklady",
+  juniors: "Junio\u0159i / mlad\u0161\xED teenage\u0159i: st\u0159edn\xED obt\xED\u017Enost",
+  adults: "Dosp\u011Bl\xED: b\u011B\u017En\xE1 obt\xED\u017Enost",
+  seniors: "Senio\u0159i: srozumiteln\xE9 v\u011Bty, klidn\xE9 tempo, konkr\xE9tn\xED kontext"
 };
 function accessibilityHints(handicaps) {
   const parts = [];
@@ -348,19 +359,26 @@ ${buildPromptEnrichment(config2)}
 Vytvo\u0159 jeden kv\xEDz v \u010De\u0161tin\u011B. V\xFDstup mus\xED p\u0159esn\u011B odpov\xEDdat JSON sch\xE9matu (\u017E\xE1dn\xFD text mimo JSON).
 
 Po\u017Eadavky na obsah:
-- P\u0159esn\u011B ${questionCount} ot\xE1zek v poli "questions" \u2014 ka\u017Ed\xE1 m\xE1 jin\xE9 zn\u011Bn\xED, \u017E\xE1dn\xE9 duplicity ani opakov\xE1n\xED stejn\xE9ho faktu.
+- P\u0159esn\u011B ${questionCount} ot\xE1zek v poli "questions". Ka\u017Ed\xE1 m\xE1 jin\xE9 zn\u011Bn\xED, \u017E\xE1dn\xE9 duplicity ani opakov\xE1n\xED stejn\xE9ho faktu.
 - T\xE9ma obsahu: ${compactThemeSummary(config2)}
 - Styl: ${CATEGORY_CS[config2.category]}
 - C\xEDlov\xE1 skupina: ${TARGET_CS[config2.targetGroup]}
 - P\u0159\xEDstupnost:
 ${accessibilityHints(config2.handicaps)}
 - Ka\u017Ed\xE1 ot\xE1zka m\xE1 p\u0159esn\u011B 4 \u0159et\u011Bzce v "options".
-- "correctAnswerIndex" je 0, 1, 2 nebo 3 \u2014 index spr\xE1vn\xE9 mo\u017Enosti.
+- "correctAnswerIndex" je 0, 1, 2 nebo 3, tedy index spr\xE1vn\xE9 mo\u017Enosti. Spr\xE1vn\xE1 odpov\u011B\u010F mus\xED b\xFDt n\xE1hodn\u011B rozlo\u017Eena mezi ot\xE1zkami (pou\u017E\xEDvej v\u0161echny pozice, nepreferuj v\u017Edy prvn\xED mo\u017Enost / index 0).
 - "id" u ot\xE1zek: q1, q2, \u2026 a\u017E q${questionCount}.
-- V textech ot\xE1zek a odpov\u011Bd\xED \u017E\xE1dn\xE9 URL ani odkazy \u2014 pouze b\u011B\u017En\xFD text v \u010De\u0161tin\u011B.
+- V textech ot\xE1zek a odpov\u011Bd\xED \u017E\xE1dn\xE9 URL ani odkazy, pouze b\u011B\u017En\xFD text v \u010De\u0161tin\u011B.
 - Ka\u017Ed\xE1 ot\xE1zka MUS\xCD m\xEDt povinn\xE9 pole "imageContextPrompt" p\u0159esn\u011B podle sekce PRAVIDLO PRO OBR\xC1ZKY v\xFD\u0161e (anglicky, kr\xE1tk\xE1 fr\xE1ze pro vyhled\xE1n\xED ilustrace bez spoileru).
 - JSON struktura ka\u017Ed\xE9 polo\u017Eky v "questions": id, questionText, options (4 \u0159et\u011Bzce), correctAnswerIndex, explanation, imageContextPrompt.
-- Odpov\u011Bdi a\u0165 jsou fakticky spr\xE1vn\xE9 a v souladu s t\xE9matem.`;
+- Striktn\u011B dodr\u017Euj sekci FAKTICK\xC1 P\u0158ESNOST v\xFD\u0161e: spr\xE1vn\xE1 odpov\u011B\u010F i distraktory mus\xED b\xFDt logicky konzistentn\xED; \u017E\xE1dn\xE9 halucinovan\xE9 \u201Efakta\u201C.`;
+}
+function quizGenerationTemperature(config2) {
+  if (config2.theme === "custom") return 0.34;
+  if (config2.category === "knowledge" || config2.category === "educational") {
+    return 0.34;
+  }
+  return 0.65;
 }
 function quizResponseJsonSchema(_questionCount) {
   const qItem = {
@@ -428,6 +446,22 @@ function normalizeQuestion(q, index) {
     imageContextPrompt
   };
 }
+function shuffleQuestionOptions(question) {
+  const tagged = question.options.map((text, i) => ({
+    text,
+    correct: i === question.correctAnswerIndex
+  }));
+  for (let i = tagged.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [tagged[i], tagged[j]] = [tagged[j], tagged[i]];
+  }
+  const correctAnswerIndex = tagged.findIndex((t) => t.correct);
+  return {
+    ...question,
+    options: tagged.map((t) => t.text),
+    correctAnswerIndex
+  };
+}
 function parseGeneratedQuiz(raw, expectedQuestionCount) {
   if (!raw || typeof raw !== "object") {
     throw new Error("Neplatn\xE1 odpov\u011B\u010F AI (nen\xED objekt).");
@@ -449,7 +483,9 @@ function parseGeneratedQuiz(raw, expectedQuestionCount) {
     if (!nq) {
       throw new Error(`Neplatn\xE1 ot\xE1zka \u010D. ${i + 1} ve struktu\u0159e AI.`);
     }
-    questions.push({ ...nq, id: `q${i + 1}` });
+    questions.push(
+      shuffleQuestionOptions({ ...nq, id: `q${i + 1}` })
+    );
   }
   if (!title) {
     throw new Error("Neplatn\xE1 odpov\u011B\u010F AI (chyb\xED n\xE1zev kv\xEDzu).");
@@ -490,7 +526,7 @@ async function generateQuizFromGemini(config2, opts) {
     systemInstruction: {
       parts: [
         {
-          text: "Jsi gener\xE1tor vzd\u011Bl\xE1vac\xEDch kv\xEDz\u016F. Odpov\xEDd\xE1\u0161 v\xFDhradn\u011B strukturovan\xFDm JSON podle zadan\xE9ho sch\xE9matu a pokyn\u016F u\u017Eivatele. Ve\u0161ker\xFD obsah pro hr\xE1\u010De pi\u0161 v \u010De\u0161tin\u011B; pole imageContextPrompt je v\xFDjimka \u2014 pouze kr\xE1tk\xFD anglick\xFD popis bezpe\u010Dn\xE9 ilustrace (atmosf\xE9ra bez spoileru), nikdy \u010Desky."
+          text: "Jsi gener\xE1tor vzd\u011Bl\xE1vac\xEDch kv\xEDz\u016F. Odpov\xEDd\xE1\u0161 v\xFDhradn\u011B strukturovan\xFDm JSON podle zadan\xE9ho sch\xE9matu a pokyn\u016F u\u017Eivatele. Ve\u0161ker\xFD obsah pro hr\xE1\u010De pi\u0161 v \u010De\u0161tin\u011B; pole imageContextPrompt je v\xFDjimka, pouze kr\xE1tk\xFD anglick\xFD popis bezpe\u010Dn\xE9 ilustrace (atmosf\xE9ra bez spoileru), nikdy \u010Desky. U faktick\xFDch ot\xE1zek mus\xED b\xFDt spr\xE1vn\xE1 odpov\u011B\u010F skute\u010Dn\u011B pravdiv\xE1; pokud si nejsi jist\xFD detailem, nepou\u017E\xEDvej ho, zvol jednozna\u010Dn\u011Bj\u0161\xED ot\xE1zku."
         }
       ]
     },
@@ -501,7 +537,7 @@ async function generateQuizFromGemini(config2, opts) {
       }
     ],
     generationConfig: {
-      temperature: 0.65,
+      temperature: quizGenerationTemperature(config2),
       maxOutputTokens: maxOutputTokensForQuiz(questionCount),
       responseMimeType: "application/json",
       responseJsonSchema: quizResponseJsonSchema(questionCount),

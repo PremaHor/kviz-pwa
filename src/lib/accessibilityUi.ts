@@ -49,7 +49,7 @@ export function quizOptionPaddingClass(_flags: AccessibilityFlags): string {
   return 'px-4 py-3'
 }
 
-/** Jedna možnost odpovědi — základ (bez stavu vyhodnocení) */
+/** Jedna možnost odpovědi, základ (bez stavu vyhodnocení) */
 export function quizOptionIdleClass(flags: AccessibilityFlags): string {
   const pad = quizOptionPaddingClass(flags)
   if (flags.visual) {
@@ -58,7 +58,7 @@ export function quizOptionIdleClass(flags: AccessibilityFlags): string {
   return `rounded-xl border-2 border-slate-600/80 bg-slate-800/60 ${pad} text-left text-base font-medium text-slate-100 transition-colors hover:border-slate-500 hover:bg-slate-700/50`
 }
 
-/** Klávesová / čitelná značka A–D */
+/** Klávesová / čitelná značka A až D */
 export function quizOptionLabelClass(flags: AccessibilityFlags): string {
   if (flags.visual) {
     return 'mr-2 font-bold text-amber-300'

@@ -93,7 +93,7 @@ const targetOptions: { value: TargetGroup; label: string; icon: typeof User }[] 
 
 type RealHandicap = Exclude<HandicapType, 'none'>
 
-/** Více výběr v pokročilém panelu (bez „Žádný“ — prázdný výběr = `['none']` ve store). */
+/** Více výběr v pokročilém panelu (bez „Žádný“; prázdný výběr = `['none']` ve store). */
 const advancedHandicapOptions: { value: RealHandicap; label: string }[] = [
   { value: 'cognitive_dementia', label: 'Kognitivní (Demence)' },
   { value: 'dyslexia', label: 'Dyslexie' },
@@ -403,7 +403,7 @@ export function Wizard() {
                           className="text-center text-sm text-slate-400"
                           id="step1-advanced-desc"
                         >
-                          Volitelné — označte vše, co platí pro vaše publikum.
+                          Volitelné: označte vše, co platí pro vaše publikum.
                         </p>
                         <div
                           className="flex flex-col gap-2"
@@ -740,7 +740,7 @@ export function Wizard() {
                   <dt className="text-slate-400">Téma</dt>
                   <dd className="max-w-[min(100%,18rem)] text-right font-medium text-white sm:max-w-xs">
                     {config.theme === 'custom'
-                      ? `${THEME_LABEL_CS.custom}: ${config.customThemeText.trim() || '—'}`
+                      ? `${THEME_LABEL_CS.custom}: ${config.customThemeText.trim() || 'zatím nevyplněno'}`
                       : THEME_LABEL_CS[config.theme]}
                   </dd>
                 </div>
@@ -757,9 +757,9 @@ export function Wizard() {
               </dl>
               <p className="text-center text-xs leading-relaxed text-slate-500">
                 Otázky a vysvětlení připraví na serveru Google Gemini podle tohoto nastavení. Klíč k API
-                není v prohlížeči — drží ho nasazení (např. proměnné prostředí na Vercelu).
+                není v prohlížeči, drží ho nasazení (např. proměnné prostředí na Vercelu).
                 {import.meta.env.VITE_QUIZ_MEDIA !== '0' &&
-                  ' Ilustrace doplní server z veřejných zdrojů (Wikimedia; volitelně Pexels) — bez druhého běhu AI u klienta.'}
+                  ' Ilustrace doplní server z veřejných zdrojů (Wikimedia, volitelně Pexels), bez druhého běhu AI u klienta.'}
               </p>
             </div>
           )}

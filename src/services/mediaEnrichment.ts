@@ -6,7 +6,7 @@ const COMMONS_API = 'https://commons.wikimedia.org/w/api.php'
 const THEME_FALLBACK_EN: Record<QuizConfiguration['theme'], string> =
   THEME_MEDIA_HINT_EN
 
-/** Krátké české/slovní spojky — ořez dotazu bez AI. */
+/** Krátké české/slovní spojky, ořez dotazu bez AI. */
 const STOP_WORDS = new Set([
   'jak',
   'co',
@@ -51,7 +51,7 @@ const STOP_WORDS = new Set([
 export type MediaEnrichmentRuntime = {
   /** `false` = žádné dotazy Commons/Pexels */
   enabled: boolean
-  /** Volitelný Pexels klíč (na klientovi zůstává prázdné — Pexels jen na serveru). */
+  /** Volitelný Pexels klíč (na klientovi zůstává prázdné; Pexels jen na serveru). */
   pexelsApiKey?: string
 }
 
@@ -65,7 +65,7 @@ function defaultClientMediaRuntime(): MediaEnrichmentRuntime {
       enabled = viteEnv.VITE_QUIZ_MEDIA !== '0'
     }
   } catch {
-    /* Node / nevite bundlování — média zapnuta */
+    /* Node / nevite bundlování, média zapnuta */
   }
   return {
     enabled,
@@ -89,7 +89,7 @@ function sanitizeMediaSearchHint(raw: string): string | null {
 
 /**
  * Záložní dotaz bez platného imageContextPrompt: jen slova z textu otázky
- * (nikoli ze správné odpovědi — předejde spoilerům ve vyhledávání).
+ * (nikoli ze správné odpovědi, předejde spoilerům ve vyhledávání).
  */
 function buildHeuristicMediaQuery(
   q: QuizQuestion,
@@ -341,7 +341,7 @@ export async function enrichQuizWithMedia(
           out[i] = { ...out[i], media }
         }
       } catch {
-        /* tiché selhání — otázka zůstane bez média */
+        /* tiché selhání, otázka zůstane bez média */
       }
       await sleep(100)
     }

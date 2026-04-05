@@ -19,13 +19,13 @@ const HANDICAP_RULES: Partial<
 
 const WEB_INSPIRATION: Record<TargetGroup, string> = {
   kids:
-    'INSPIRACE OBSAHEM A TÓNEM (nevytvářej otázky o těchto webech jako takové; jen úroveň a styl): ČT Déčko, Alík.cz, Rumvi a podobné bezpečné dětské portály — hravý jasný jazyk, věk 6–10 let.',
+    'INSPIRACE OBSAHEM A TÓNEM (nevytvářej otázky o těchto webech jako takové; jen úroveň a styl): ČT Déčko, Alík.cz, Rumvi a podobné bezpečné dětské portály. Hravý jasný jazyk, věk zhruba 6 až 10 let.',
   juniors:
-    'INSPIRACE: YouTube/TikTok (kulturně vhodné), herní novinky, Kahoot, streamovací scéna — svižný tón teenagera, ale bez nebezpečných výzev a vulgárních memů.',
+    'INSPIRACE: YouTube/TikTok (kulturně vhodné), herní novinky, Kahoot, streamovací scéna. Svižný tón teenagera, ale bez nebezpečných výzev a vulgárních memů.',
   adults:
-    'INSPIRACE: zpravodajské a magazínové weby (např. Novinky, iDNES), hobby portály, hospodský kvíz, CSFD/Kinobox u popkultury — dospělý neutrální až mírně vtípkářský tón.',
+    'INSPIRACE: zpravodajské a magazínové weby (např. Novinky, iDNES), hobby portály, hospodský kvíz, CSFD/Kinobox u popkultury. Dospělý neutrální až mírně vtípkářský tón.',
   seniors:
-    'INSPIRACE: Český rozhlas (Plus, Dvojka), regionální zpravodajství, témata zahrady, zvyky, paměti na mládí — klidný, respektující tón bez moderního slangu.',
+    'INSPIRACE: Český rozhlas (Plus, Dvojka), regionální zpravodajství, témata zahrady, zvyky, paměti na mládí. Klidný, respektující tón bez moderního slangu.',
 }
 
 function buildHandicapRulesBlock(handicaps: HandicapType[]): string {
@@ -38,7 +38,7 @@ function buildHandicapRulesBlock(handicaps: HandicapType[]): string {
 
 /**
  * Konkrétní formáty otázek podle cílové skupiny a kategorie (mapování z průvodce).
- * `competitive` má vlastní pravidla u juniorů a dospělých; u dětí jako zábavné; u seniorů v UI není — v promptu se bere jako vědomostní (fallback).
+ * `competitive` má vlastní pravidla u juniorů a dospělých; u dětí jako zábavné; u seniorů v UI není, v promptu se bere jako vědomostní (fallback).
  */
 function buildQuestionFormatBlock(config: QuizConfiguration): string {
   const { targetGroup, category } = config
@@ -87,7 +87,7 @@ function buildQuestionFormatBlock(config: QuizConfiguration): string {
       return `FORMÁT OTÁZEK: Respektující vědomostní test ve stylu pořadu AZ Kvíz. Zaměř se na 'krystalizovanou inteligenci': československá historie 20. století, zeměpis, klasická literatura a významné osobnosti. Otázky musí být důstojné a bez chytáků.`
     }
     if (category === 'fun') {
-      return `FORMÁT OTÁZEK: Nostalgie a společné vzpomínání. Vytvářej otázky typu 'Stroj času' (ceny zboží a každodenní život v letech 1960-1980), doplňování textů známých lidových nebo populárních písní z té doby a doplňování českých přísloví.`
+      return `FORMÁT OTÁZEK: Nostalgie a společné vzpomínání. Vytvářej otázky typu 'Stroj času' (ceny zboží a každodenní život v letech 1960 až 1980), doplňování textů známých lidových nebo populárních písní z té doby a doplňování českých přísloví.`
     }
     if (category === 'educational') {
       return `FORMÁT OTÁZEK: Pojmi to jako jemný trénink paměti a objevování. Témata jako příroda, bylinkářství, tradiční recepty z babiččiny kuchařky nebo stará řemesla. Do pole 'explanation' napiš velmi laskavé a zajímavé doplnění kontextu k dané věci.`
@@ -97,13 +97,22 @@ function buildQuestionFormatBlock(config: QuizConfiguration): string {
   return ''
 }
 
-/** Přesné znění pro user prompt — pravidla bezpečných ilustrací bez spoilerů. */
+/** Přesné znění pro user prompt: pravidla bezpečných ilustrací bez spoilerů. */
 export const IMAGE_CONTEXT_RULES_CS = `PRAVIDLO PRO OBRÁZKY (KRITICKÉ):
-Pro každou otázku vygeneruj do pole 'imageContextPrompt' textový popis obrázku (v angličtině, max 5-8 slov). 
+Pro každou otázku vygeneruj do pole 'imageContextPrompt' textový popis obrázku (v angličtině, max 5 až 8 slov). 
 Tento obrázek MUSÍ navodit atmosféru otázky, ale ABSOLUTNĚ NESMÍ obsahovat nebo naznačovat správnou odpověď!
 Příklad 1: Pokud je otázka 'Kdo napsal Babičku?', imageContextPrompt bude: 'old rustic spinning wheel in a wooden cottage' (NE portrét spisovatelky).
 Příklad 2: Pokud je otázka 'Které zvíře má pruhy?', imageContextPrompt bude: 'african savanna landscape at sunset' (NE zebra).
 Obrázek musí ilustrovat 'místo' nebo 'nástroj' související s tématem, nikdy ne samotný předmět otázky.`
+
+/** Globální pravidla proti halucinacím u faktických kvízů (bez RAG). */
+export const FACTUAL_ACCURACY_RULES_CS = `PRAVIDLA FAKTICKÉ PŘESNOSTI (KRITICKÉ):
+- Generuj pouze tvrzení, u kterých jsi si jistý: běžně ověřitelná fakta (známá díla, osobnosti, hrubé souvislosti). Nevymýšlej konkrétní roky, dílčí epizody, vedlejší postavy ani detaily, pokud si nejsi jistý.
+- Pokud si nejsi jistý přesným údajem, zjednoduš otázku na obecně platný a jednoznačný fakt, nebo ji přeformuluj. Raději obecněji než chybně konkrétně.
+- Nesprávné možnosti (distraktory) musí být zjevně chybné nebo jednoznačně odlišné od správné odpovědi; nepoužívej další „pravděpodobné“ vymyšlené varianty, které by mohly být klamavě správné.
+- Do pole 'explanation' vždy stručně doplň kontext podporující správnou odpověď (např. název díla, období); nepřidávej smyšlené detaily ani nejistá tvrzení.`
+
+const CUSTOM_THEME_FACTUAL_ADDON_CS = `DODATEK PRO VLASTNÍ TÉMA: Téma je uživatelsky zvolené a může být úzké nebo odborné (např. éra, žánr, regionální kultura, starší český film). Drž se nejznámějších a nejdokumentovanějších faktů z daného oboru. Vyhni se obskurním titulům a záludnostem z okraje znalostí. U kinematografie, literatury a historie preferuj etablované klasiky a všeobecně sdílené reálie.`
 
 function sanitizeCustomThemeForPrompt(raw: string): string {
   return raw
@@ -119,7 +128,9 @@ export function buildThemeInstructionBlock(config: QuizConfiguration): string {
   }
   if (config.theme === 'custom') {
     const t = sanitizeCustomThemeForPrompt(config.customThemeText)
-    return `TÉMA: Kvíz se musí striktně a do hloubky týkat tohoto vlastního tématu: '${t}'.`
+    return `TÉMA: Kvíz se musí striktně a do hloubky týkat tohoto vlastního tématu: '${t}'.
+
+${CUSTOM_THEME_FACTUAL_ADDON_CS}`
   }
   return `TÉMA: Zaměř se na specifickou oblast: ${config.theme}.`
 }
@@ -130,7 +141,7 @@ function buildWebInspirationBlock(config: QuizConfiguration): string {
   const extra: string[] = [base]
   if (h.has('dyslexia')) {
     extra.push(
-      'Doplňující styl: jazyk jako v přístupných článcích pro široké publikum — krátké odstavce myšlenkově, jednoduchá souvětí.'
+      'Doplňující styl: jazyk jako v přístupných článcích pro široké publikum, krátké odstavce myšlenkově, jednoduchá souvětí.'
     )
   }
   return '=== INSPIRACE REÁLNÝMI WEBY A MÉDII (jen tón a témata) ===\n\n' + extra.join('\n\n')
@@ -144,19 +155,19 @@ function buildPersonaBlock(config: QuizConfiguration): string {
   }
 
   if (targetGroup === 'kids' && category === 'educational') {
-    return `TVOJE ROLE: Učitel/ka 1. stupně ZŠ — vlídně a trpělivě jako ve výukových blocích na Déčku nebo Rumvi. STYL: Naučné, ale vždy s jednoduchým příkladem nebo přirovnáním z dětského světa. Žádné odborné termíny bez vysvětlení.`
+    return `TVOJE ROLE: Učitel/ka 1. stupně ZŠ, vlídně a trpělivě jako ve výukových blocích na Déčku nebo Rumvi. STYL: Naučné, ale vždy s jednoduchým příkladem nebo přirovnáním z dětského světa. Žádné odborné termíny bez vysvětlení.`
   }
 
   if (targetGroup === 'kids' && category === 'knowledge') {
-    return `TVOJE ROLE: Tvůrce dětského vědomostního kvízu (6–10 let). STYL: Konkrétní otázky ze života zvířat, přírody, svátků, sportu pro děti. Obtížnost vždy úměrná věku — žádné reálie z politiky či finančních produktů.`
+    return `TVOJE ROLE: Tvůrce dětského vědomostního kvízu (6 až 10 let). STYL: Konkrétní otázky ze života zvířat, přírody, svátků, sportu pro děti. Obtížnost vždy úměrná věku, žádné reálie z politiky či finančních produktů.`
   }
 
   if (targetGroup === 'juniors' && category === 'competitive') {
-    return `TVOJE ROLE: Tvůrce rychlých viralových výzev ve stylu Kahoot a Herních kanálů. STYL: Úderné věty, gaming, filmy, seriály, sporty — lehká ironie je v pořádku, obsah musí zůstat slušný.`
+    return `TVOJE ROLE: Tvůrce rychlých viralových výzev ve stylu Kahoot a Herních kanálů. STYL: Úderné věty, gaming, filmy, seriály, sporty. Lehká ironie je v pořádku, obsah musí zůstat slušný.`
   }
 
   if (targetGroup === 'juniors') {
-    return `TVOJE ROLE: Moderátor kvízu pro teenagery (cca 12–16 let). STYL: Srozumitelný, živý, můžeš občas narážet na školu, sporty, technologie a popkulturu v míře vhodné pro mládež.`
+    return `TVOJE ROLE: Moderátor kvízu pro teenagery (cca 12 až 16 let). STYL: Srozumitelný, živý, můžeš občas narážet na školu, sporty, technologie a popkulturu v míře vhodné pro mládež.`
   }
 
   if (targetGroup === 'adults' && (category === 'fun' || category === 'competitive')) {
@@ -175,7 +186,7 @@ function buildPersonaBlock(config: QuizConfiguration): string {
 }
 
 /**
- * Blok textu pro system/user prompt — persona, přístupnost, inspirace weby.
+ * Blok textu pro system/user prompt: persona, přístupnost, inspirace weby.
  */
 export function buildPromptEnrichment(config: QuizConfiguration): string {
   const parts: string[] = [
@@ -191,6 +202,10 @@ export function buildPromptEnrichment(config: QuizConfiguration): string {
 
   parts.push(
     '=== PRAVIDLO PRO OBRÁZKY ===\n\n' + IMAGE_CONTEXT_RULES_CS
+  )
+
+  parts.push(
+    '=== FAKTICKÁ PŘESNOST ===\n\n' + FACTUAL_ACCURACY_RULES_CS
   )
 
   parts.push(

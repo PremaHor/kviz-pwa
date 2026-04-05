@@ -1,6 +1,6 @@
 import type { HandicapType, QuizTheme, TargetGroup } from '@/types'
 
-/** Karty témat podle publika (bez ikon — ty mapuje UI kvůli malému serverovému bundlu). */
+/** Karty témat podle publika (bez ikon; ty mapuje UI kvůli malému serverovému bundlu). */
 export const THEME_OPTIONS: Record<
   TargetGroup,
   readonly { value: QuizTheme; label: string }[]
@@ -24,7 +24,7 @@ export const THEME_OPTIONS: Record<
     { value: 'ad_science_tech', label: 'Věda a technika' },
   ],
   seniors: [
-    { value: 'sr_retro_6080', label: 'Retro (60.–80. léta)' },
+    { value: 'sr_retro_6080', label: 'Retro (60. až 80. léta)' },
     { value: 'sr_golden_czech_hands', label: 'Zlaté české ručičky' },
     { value: 'sr_nature_herbs', label: 'Příroda a bylinky' },
     { value: 'sr_history_local', label: 'Historie a místopis' },
@@ -69,7 +69,7 @@ export const THEME_LABEL_CS: Record<QuizTheme, string> = {
   ad_travel_geography: 'Cestování a geografie',
   ad_history_culture: 'Historie a kultura',
   ad_science_tech: 'Věda a technika',
-  sr_retro_6080: 'Retro (60.–80. léta)',
+  sr_retro_6080: 'Retro (60. až 80. léta)',
   sr_golden_czech_hands: 'Zlaté české ručičky',
   sr_nature_herbs: 'Příroda a bylinky',
   sr_history_local: 'Historie a místopis',

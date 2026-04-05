@@ -23,7 +23,7 @@ function resultTone(
   if (pct === 100) {
     return {
       headline: 'Naprosto výborně!',
-      subline: 'Všechny odpovědi sedí — pokračujte v tomhle stylu.',
+      subline: 'Všechny odpovědi sedí. Pokračujte v tomhle stylu.',
       Icon: Sparkles,
     }
   }
@@ -37,14 +37,14 @@ function resultTone(
   if (pct >= 50) {
     return {
       headline: 'Dobrý výsledek',
-      subline: 'Polovina a víc je solidní základ — další kolo vás posune dál.',
+      subline: 'Polovina a víc je solidní základ, další kolo vás posune dál.',
       Icon: BookOpen,
     }
   }
   if (pct >= 25) {
     return {
       headline: 'Ještě to doladíte',
-      subline: 'Nebuďte na sebe přísní — zkuste kvíz znovu nebo jiné téma.',
+      subline: 'Nebuďte na sebe přísní, zkuste kvíz znovu nebo jiné téma.',
       Icon: Target,
     }
   }
