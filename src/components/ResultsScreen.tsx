@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 import { BookOpen, PartyPopper, RotateCcw, Sparkles, Target, Trophy } from 'lucide-react'
 import { useMemo } from 'react'
 import { getAccessibilityFlags } from '@/lib/accessibilityUi'
+import { competitiveMaxScore } from '@/lib/competitiveScoring'
 import { useQuizStore } from '@/store/useQuizStore'
 
 function resultTone(
@@ -59,11 +60,21 @@ export function ResultsScreen() {
   const quiz = useQuizStore((s) => s.quiz)
   const config = useQuizStore((s) => s.config)
   const quizScore = useQuizStore((s) => s.quizScore)
+  const gameMode = useQuizStore((s) => s.gameMode)
+  const mpPlayers = useQuizStore((s) => s.multiplayer.players)
   const reset = useQuizStore((s) => s.reset)
 
   const flags = useMemo(() => getAccessibilityFlags(config), [config])
   const total = quiz?.questions.length ?? 0
-  const percent = total > 0 ? Math.round((quizScore / total) * 100) : 0
+  const isCompetitive = config.category === 'competitive'
+  const maxPoints =
+    isCompetitive && total > 0
+      ? competitiveMaxScore(total, config.targetGroup)
+      : total
+  const percent =
+    total > 0
+      ? Math.round((quizScore / Math.max(1, maxPoints)) * 100)
+      : 0
   const { headline, subline, Icon } = useMemo(
     () => resultTone(percent, total),
     [percent, total]
@@ -86,6 +97,13 @@ export function ResultsScreen() {
     : 'mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 px-5 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-400'
 
   const percentClass = flags.visual ? 'mt-2 text-base text-amber-100/90' : 'mt-2 text-sm text-slate-400'
+
+  const mpLeaderboard = useMemo(() => {
+    if (gameMode !== 'multi' || mpPlayers.length === 0) return null
+    return [...mpPlayers].sort(
+      (a, b) => b.score - a.score || a.name.localeCompare(b.name)
+    )
+  }, [gameMode, mpPlayers])
 
   return (
     <motion.div
@@ -132,14 +150,53 @@ export function ResultsScreen() {
           }
         >
           {' '}
-          / {total}
+          / {isCompetitive ? maxPoints : total}
+          {isCompetitive ? ' bodů' : ''}
         </span>
       </p>
       <p className={percentClass}>
         {total > 0
-          ? `${Math.round((quizScore / total) * 100)} % správně`
+          ? isCompetitive
+            ? `${percent} % z maxima bodů`
+            : `${percent} % správně`
           : 'Žádné otázky'}
       </p>
+      {mpLeaderboard && mpLeaderboard.length > 0 ? (
+        <div
+          className={
+            flags.visual
+              ? 'mt-6 w-full rounded-xl border border-amber-400/40 bg-neutral-900/80 p-4 text-left'
+              : 'mt-6 w-full rounded-xl border border-slate-600/80 bg-slate-900/50 p-4 text-left'
+          }
+        >
+          <p
+            className={
+              flags.visual
+                ? 'text-center text-sm font-medium text-amber-100'
+                : 'text-center text-sm font-medium text-slate-300'
+            }
+          >
+            Multiplayer – pořadí
+          </p>
+          <ol className="mt-3 space-y-2">
+            {mpLeaderboard.map((p, i) => (
+              <li
+                key={p.id}
+                className={
+                  flags.visual
+                    ? 'flex justify-between rounded-lg bg-neutral-950/80 px-3 py-2 text-sm text-white'
+                    : 'flex justify-between rounded-lg bg-slate-800/80 px-3 py-2 text-sm text-slate-100'
+                }
+              >
+                <span>
+                  {i + 1}. {p.name}
+                </span>
+                <span className="font-mono font-semibold text-amber-200">{p.score}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
       <motion.button
         type="button"
         whileHover={{ scale: 1.02 }}

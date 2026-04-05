@@ -1,4 +1,5 @@
 import type { GeneratedQuiz, QuizConfiguration } from '@/types'
+import { quizOptionCountForConfig } from '@/lib/accessibility/handicapRules'
 import { enrichQuizWithMedia } from '@/services/mediaEnrichment'
 import { THEME_LABEL_CS, THEME_MEDIA_HINT_EN } from '@/lib/themeWizardOptions'
 
@@ -19,6 +20,20 @@ function mockQuizTitle(config: QuizConfiguration): string {
 }
 
 function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
+  const optN = quizOptionCountForConfig(config)
+  const opts1 =
+    optN === 3
+      ? (['Rozumím', 'Ne', 'Možná'] as const)
+      : (['Rozumím', 'Ne', 'Možná', 'Nevím'] as const)
+  const opts2 =
+    optN === 3
+      ? ([THEME_LABEL_MOCK[config.theme], 'Jiné téma', 'Náhodné'] as const)
+      : ([
+          THEME_LABEL_MOCK[config.theme],
+          'Jiné téma',
+          'Náhodné',
+          'Žádné',
+        ] as const)
   return {
     title: mockQuizTitle(config),
     questions: [
@@ -26,7 +41,7 @@ function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
         id: 'q1',
         questionText:
           'Toto je ukázková otázka. Spusť `npm run dev` (Vercel + Vite) nebo nasaď na Vercel s GEMINI_API_KEY.',
-        options: ['Rozumím', 'Ne', 'Možná', 'Nevím'],
+        options: [...opts1],
         correctAnswerIndex: 0,
         imageContextPrompt: 'cozy study desk with warm lamp',
         explanation:
@@ -35,12 +50,7 @@ function generateQuizMock(config: QuizConfiguration): GeneratedQuiz {
       {
         id: 'q2',
         questionText: 'Které téma jsi zvolil v průvodci?',
-        options: [
-          THEME_LABEL_MOCK[config.theme],
-          'Jiné téma',
-          'Náhodné',
-          'Žádné',
-        ],
+        options: [...opts2],
         correctAnswerIndex: 0,
         imageContextPrompt: MOCK_THEME_MEDIA_HINT[config.theme],
         explanation: `V konfiguraci je téma: ${
@@ -95,6 +105,21 @@ function humanizeApiError(
   return parts.length > 0 ? parts.join('. ') : `Chyba serveru (${status}).`
 }
 
+function cancellableDelay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'))
+      return
+    }
+    const t = window.setTimeout(resolve, ms)
+    const onAbort = () => {
+      window.clearTimeout(t)
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
 function parseJsonResponse(text: string, status: number): unknown {
   const trimmed = text.replace(/^\uFEFF/, '').trim()
   if (!trimmed) {
@@ -127,7 +152,8 @@ function parseJsonResponse(text: string, status: number): unknown {
 }
 
 async function fetchQuizFromApi(
-  config: QuizConfiguration
+  config: QuizConfiguration,
+  signal?: AbortSignal
 ): Promise<GeneratedQuiz> {
   const res = await fetch('/api/generate-quiz', {
     method: 'POST',
@@ -137,6 +163,7 @@ async function fetchQuizFromApi(
     },
     body: JSON.stringify(config),
     cache: 'no-store',
+    signal,
   })
 
   const text = await res.text()
@@ -171,29 +198,34 @@ function useOfflineMockFallback(): boolean {
  * Offline ukázka: nastav `VITE_DEV_MOCK=1` při `vite` bez backendu.
  */
 export async function generateQuiz(
-  config: QuizConfiguration
+  config: QuizConfiguration,
+  signal?: AbortSignal
 ): Promise<GeneratedQuiz> {
   if (useOfflineMockFallback()) {
     console.warn(
       '[kvíz] VITE_DEV_MOCK=1: používám lokální ukázkový kvíz bez API.'
     )
-    await new Promise((r) => setTimeout(r, 600))
+    await cancellableDelay(600, signal)
     const quiz = generateQuizMock(config)
-    return enrichQuizWithMedia(quiz, config)
+    return enrichQuizWithMedia(quiz, config, undefined, signal)
   }
 
   try {
-    return await fetchQuizFromApi(config)
+    return await fetchQuizFromApi(config, signal)
   } catch (e) {
+    const aborted =
+      (e instanceof DOMException && e.name === 'AbortError') ||
+      (e instanceof Error && e.name === 'AbortError')
+    if (aborted) throw e
     if (import.meta.env.DEV) {
       const msg = e instanceof Error ? e.message : String(e)
       console.warn(
         '[kvíz] /api/generate-quiz nedostupné, používám ukázkový kvíz. Tip: `npm run dev` spouští Vercel dev server.',
         msg
       )
-      await new Promise((r) => setTimeout(r, 600))
+      await cancellableDelay(600, signal)
       const quiz = generateQuizMock(config)
-      return enrichQuizWithMedia(quiz, config)
+      return enrichQuizWithMedia(quiz, config, undefined, signal)
     }
     throw e
   }

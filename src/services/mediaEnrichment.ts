@@ -319,11 +319,19 @@ async function resolveMediaForQuestion(
 export async function enrichQuizWithMedia(
   quiz: GeneratedQuiz,
   config: QuizConfiguration,
-  runtime?: MediaEnrichmentRuntime
+  runtime?: MediaEnrichmentRuntime,
+  signal?: AbortSignal
 ): Promise<GeneratedQuiz> {
   const env = runtime ?? defaultClientMediaRuntime()
   if (!env.enabled) {
     return quiz
+  }
+
+  if (config.handicaps.includes('visual_impairment')) {
+    return {
+      ...quiz,
+      questions: quiz.questions.map(({ media: _m, ...q }) => q),
+    }
   }
 
   const questions = quiz.questions
@@ -333,6 +341,9 @@ export async function enrichQuizWithMedia(
 
   const worker = async () => {
     while (true) {
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError')
+      }
       const i = next++
       if (i >= out.length) break
       try {

@@ -1,40 +1,55 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import {
-  AlertCircle,
   ArrowLeft,
   ArrowRight,
+  Award,
   Baby,
+  Banknote,
   BookOpen,
+  Brain,
   Check,
   ChevronDown,
   ChevronUp,
   Clapperboard,
   Dices,
+  Film,
   FlaskConical,
   Gamepad2,
   Globe2,
   GraduationCap,
   Hammer,
+  Heart,
+  HeartPulse,
   Landmark,
   LayoutList,
   Leaf,
+  LineChart,
   List,
   ListOrdered,
   Map,
   Microscope,
+  Music2,
+  OctagonAlert,
   PartyPopper,
   Rocket,
+  Scale,
+  Share2,
+  Shield,
   ShieldAlert,
+  Smile,
   Sparkles,
+  Stethoscope,
   Sun,
   Trophy,
   User,
   Users,
   Wand2,
-  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { CompetitiveSettings } from '@/components/competitive/CompetitiveSettings'
+import { GameModeStep } from '@/components/wizard/GameModeStep'
+import { SummaryStep } from '@/components/wizard/SummaryStep'
 import {
   getAccessibilityFlags,
   quizOptionIdleClass,
@@ -43,13 +58,13 @@ import {
   quizQuestionTitleClass,
   quizSurfaceClass,
 } from '@/lib/accessibilityUi'
-import { getQuestionCount, quizLengthChoices } from '@/lib/quizLength'
+import { clampCompetitiveTimeLimitSeconds } from '@/lib/competitiveScoring'
+import { quizLengthChoices } from '@/lib/quizLength'
 import { allowedCategories, allowedThemes } from '@/lib/wizardOptions'
+import { getThemeCardsForWizardStep } from '@/lib/topicsByGroup'
 import {
   defaultThemeForAudience,
   SPECIAL_THEME_CARDS,
-  THEME_LABEL_CS,
-  THEME_OPTIONS,
 } from '@/lib/themeWizardOptions'
 
 const THEME_STEP_ICONS: Record<QuizTheme, LucideIcon> = {
@@ -57,18 +72,50 @@ const THEME_STEP_ICONS: Record<QuizTheme, LucideIcon> = {
   kid_animals: Leaf,
   kid_fairy_tales_magic: Sparkles,
   kid_space_dinosaurs: Rocket,
+  kid_fun_friends_fun: Users,
+  kid_fun_animal_jokes: Smile,
+  kid_edu_my_body: Heart,
+  kid_edu_traffic_signs: OctagonAlert,
+  kid_edu_first_aid: HeartPulse,
   jr_gaming_tech: Gamepad2,
   jr_nature_science: FlaskConical,
   jr_pop_culture: Clapperboard,
   jr_fake_news_myths: ShieldAlert,
+  jr_fun_social_networks: Share2,
+  jr_fun_jokes_memes: Smile,
+  jr_fun_tiktok_trends: Music2,
+  jr_edu_financial_literacy: Banknote,
+  jr_edu_ecology_climate: Leaf,
+  jr_edu_sex_education: BookOpen,
+  jr_comp_esports_sports: Trophy,
+  jr_comp_logic_puzzles: Brain,
+  jr_comp_brain_races: Brain,
   ad_general: BookOpen,
   ad_travel_geography: Globe2,
   ad_history_culture: Landmark,
   ad_science_tech: Microscope,
+  ad_fun_bizarre_laws: Scale,
+  ad_fun_amazing_records: Award,
+  ad_fun_cinema_gems: Film,
+  ad_edu_health_prevention: Stethoscope,
+  ad_edu_law_everyday: Scale,
+  ad_edu_psychology: Brain,
+  ad_comp_brain_races: Brain,
+  ad_comp_economy_quiz: LineChart,
+  ad_comp_global_challenges: Globe2,
   sr_retro_6080: Sun,
   sr_golden_czech_hands: Hammer,
   sr_nature_herbs: Leaf,
   sr_history_local: Map,
+  sr_fun_youth_hits: Music2,
+  sr_fun_cinema_treasures: Clapperboard,
+  sr_fun_dance_evenings: Music2,
+  sr_edu_healthy_aging: Heart,
+  sr_edu_online_safety: Shield,
+  sr_edu_first_aid_seniors: HeartPulse,
+  sr_comp_who_remembers: Brain,
+  sr_comp_veterans_quiz: Landmark,
+  sr_comp_family_history: Users,
   random: Dices,
   custom: Wand2,
 }
@@ -123,30 +170,6 @@ function toggleAdvancedHandicap(
   return [...base, value]
 }
 
-const labelTarget: Record<TargetGroup, string> = {
-  kids: 'Děti',
-  juniors: 'Junioři',
-  adults: 'Dospělí',
-  seniors: 'Senioři',
-}
-
-const labelHandicap: Record<HandicapType, string> = {
-  none: 'Žádný',
-  cognitive_dementia: 'Kognitivní (Demence)',
-  dyslexia: 'Dyslexie',
-  visual_impairment: 'Zrakové postižení',
-  hearing_impairment: 'Sluchové postižení (Neslyšící)',
-  autism_spectrum: 'Poruchy autistického spektra',
-  czech_learners: 'Cizinci (Základy češtiny)',
-}
-
-const labelCategory: Record<QuizCategory, string> = {
-  knowledge: 'Vědomostní',
-  educational: 'Výukové',
-  fun: 'Zábavné',
-  competitive: 'Soutěžní',
-}
-
 const lengthIcons: Record<QuizLength, typeof List> = {
   short: List,
   medium: ListOrdered,
@@ -162,10 +185,10 @@ const stepVariants = {
 export function Wizard() {
   const [step, setStep] = useState(1)
   const config = useQuizStore((s) => s.config)
+  const gameMode = useQuizStore((s) => s.gameMode)
+  const multiplayer = useQuizStore((s) => s.multiplayer)
   const setConfig = useQuizStore((s) => s.setConfig)
   const setAppStep = useQuizStore((s) => s.setStep)
-  const generationError = useQuizStore((s) => s.generationError)
-  const setGenerationError = useQuizStore((s) => s.setGenerationError)
 
   const [advancedAccessibilityOpen, setAdvancedAccessibilityOpen] = useState(
     () => config.handicaps.some((h) => h !== 'none')
@@ -177,14 +200,16 @@ export function Wizard() {
     [config.handicaps]
   )
 
-  const handicapSummaryLabel = useMemo(() => {
-    if (activeHandicaps.length === 0) return 'Standardní (bez úprav)'
-    return activeHandicaps.map((h) => labelHandicap[h]).join(', ')
-  }, [activeHandicaps])
-
   useEffect(() => {
     const cats = allowedCategories(config.targetGroup, config.handicaps)
     const themes = allowedThemes(config.targetGroup, config.handicaps)
+    const visible = new Set([
+      ...getThemeCardsForWizardStep(config.targetGroup, config.category).map(
+        (c) => c.value
+      ),
+      'random',
+      'custom',
+    ])
     const patch: Partial<{
       category: QuizCategory
       theme: QuizTheme
@@ -194,6 +219,9 @@ export function Wizard() {
       patch.category = cats[0]
     }
     if (!themes.includes(config.theme)) {
+      patch.theme = defaultThemeForAudience(config.targetGroup)
+      patch.customThemeText = ''
+    } else if (!visible.has(config.theme)) {
       patch.theme = defaultThemeForAudience(config.targetGroup)
       patch.customThemeText = ''
     }
@@ -208,6 +236,20 @@ export function Wizard() {
     setConfig,
   ])
 
+  useEffect(() => {
+    if (config.category !== 'competitive' || config.targetGroup === 'kids') return
+    const raw = config.competitiveTimeLimitSeconds
+    const clamped = clampCompetitiveTimeLimitSeconds(raw, config.targetGroup)
+    if (raw === undefined || raw !== clamped) {
+      setConfig({ competitiveTimeLimitSeconds: clamped })
+    }
+  }, [
+    config.category,
+    config.targetGroup,
+    config.competitiveTimeLimitSeconds,
+    setConfig,
+  ])
+
   const categoryChoices = useMemo(
     () =>
       categoryOptions.filter((o) =>
@@ -218,19 +260,26 @@ export function Wizard() {
 
   const themeStepCards = useMemo(() => {
     const rows = [
-      ...THEME_OPTIONS[config.targetGroup],
+      ...getThemeCardsForWizardStep(config.targetGroup, config.category),
       ...SPECIAL_THEME_CARDS,
     ] as const
     return rows.map((row) => ({
       ...row,
       icon: THEME_STEP_ICONS[row.value],
     }))
-  }, [config.targetGroup])
+  }, [config.targetGroup, config.category])
 
   const canProceedFromThemeStep = useMemo(() => {
     if (config.theme !== 'custom') return true
     return config.customThemeText.length >= 3
   }, [config.theme, config.customThemeText])
+
+  const canProceedFromStep1 = useMemo(
+    () =>
+      gameMode === 'single' ||
+      (Boolean(multiplayer.roomCode) && multiplayer.players.length > 0),
+    [gameMode, multiplayer.roomCode, multiplayer.players.length]
+  )
 
   const selectTheme = useCallback(
     (value: QuizTheme) => {
@@ -275,29 +324,6 @@ export function Wizard() {
 
   return (
     <div className="w-full max-w-lg">
-      {generationError && (
-        <div
-          role="alert"
-          className="mb-6 flex gap-3 rounded-xl border border-rose-500/50 bg-rose-950/50 p-4 text-left text-sm text-rose-100"
-        >
-          <AlertCircle
-            className="h-5 w-5 shrink-0 text-rose-400"
-            aria-hidden
-          />
-          <div className="min-w-0 flex-1">
-            <p className="font-medium text-rose-50">Generování se nezdařilo</p>
-            <p className="mt-1 text-rose-200/90">{generationError}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setGenerationError(null)}
-            className="shrink-0 rounded-lg p-1 text-rose-300 hover:bg-rose-900/50 hover:text-white"
-            aria-label="Zavřít hlášku"
-          >
-            <X className="h-5 w-5" aria-hidden />
-          </button>
-        </div>
-      )}
       <header className="mb-8 text-center">
         <p className="text-sm font-medium text-indigo-300" aria-live="polite">
           Krok {step} z {TOTAL_STEPS}
@@ -337,7 +363,8 @@ export function Wizard() {
         >
           {step === 1 && (
             <fieldset className="space-y-4 border-0 p-0">
-              <legend className="sr-only">Cílová skupina a přístupnost</legend>
+              <legend className="sr-only">Režim hry, cílová skupina a přístupnost</legend>
+              <GameModeStep />
               <p className="text-center text-slate-300" id="step1-desc">
                 Kdo bude kvíz hrát?
               </p>
@@ -539,6 +566,10 @@ export function Wizard() {
                   )
                 })}
               </div>
+              {config.category === 'competitive' &&
+                config.targetGroup !== 'kids' && (
+                  <CompetitiveSettings config={config} onChange={setConfig} />
+                )}
             </fieldset>
           )}
 
@@ -651,26 +682,19 @@ export function Wizard() {
                   )
                 })}
               </div>
-            </fieldset>
-          )}
 
-          {step === 4 && (
-            <div className="space-y-6">
-              <h2 className="text-center text-lg font-semibold text-white">
-                Shrnutí
-              </h2>
-              <fieldset className="space-y-3 border-0 p-0">
+              <fieldset className="space-y-3 border-0 border-t border-slate-700/80 p-0 pt-6">
                 <legend className="sr-only">Délka kvízu</legend>
                 <p
                   className="text-center text-slate-300"
-                  id="step4-length-desc"
+                  id="step3-length-desc"
                 >
                   Zvolte délku kvízu
                 </p>
                 <div
                   className="grid grid-cols-1 gap-3 sm:grid-cols-3"
                   role="group"
-                  aria-labelledby="step4-length-desc"
+                  aria-labelledby="step3-length-desc"
                 >
                   {quizLengthChoices.map(({ value, label, count }) => {
                     const selected = config.quizLength === value
@@ -702,119 +726,52 @@ export function Wizard() {
                   })}
                 </div>
               </fieldset>
-              {import.meta.env.DEV && (
-                <div
-                  role="note"
-                  className="rounded-xl border border-sky-500/35 bg-sky-950/30 px-4 py-3 text-left text-sm text-sky-100/95"
-                >
-                  <p className="font-medium text-sky-50">Lokální vývoj</p>
-                  <p className="mt-1 text-sky-100/90">
-                    Pro generování z AI spusťte <span className="font-mono text-xs">npm run dev</span>{' '}
-                    (Vercel CLI včetně <span className="font-mono text-xs">/api/generate-quiz</span>).
-                    Čistý <span className="font-mono text-xs">vite</span> bez API zobrazí jen krátkou
-                    ukázku. Volitelně <span className="font-mono text-xs">VITE_DEV_MOCK=1</span> v{' '}
-                    <span className="font-mono text-xs">.env</span>.
-                  </p>
-                </div>
-              )}
-              <dl className="space-y-3 rounded-2xl border border-slate-600/80 bg-slate-800/50 p-5">
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
-                  <dt className="text-slate-400">Skupina</dt>
-                  <dd className="font-medium text-white">
-                    {labelTarget[config.targetGroup]}
-                  </dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
-                  <dt className="text-slate-400">Přístupnost</dt>
-                  <dd className="font-medium text-white">
-                    {handicapSummaryLabel}
-                  </dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
-                  <dt className="text-slate-400">Kategorie</dt>
-                  <dd className="font-medium text-white">
-                    {labelCategory[config.category]}
-                  </dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
-                  <dt className="text-slate-400">Téma</dt>
-                  <dd className="max-w-[min(100%,18rem)] text-right font-medium text-white sm:max-w-xs">
-                    {config.theme === 'custom'
-                      ? `${THEME_LABEL_CS.custom}: ${config.customThemeText.trim() || 'zatím nevyplněno'}`
-                      : THEME_LABEL_CS[config.theme]}
-                  </dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between">
-                  <dt className="text-slate-400">Délka</dt>
-                  <dd className="font-medium text-white">
-                    {
-                      quizLengthChoices.find((c) => c.value === config.quizLength)
-                        ?.label
-                    }{' '}
-                    ({getQuestionCount(config.quizLength)} otázek)
-                  </dd>
-                </div>
-              </dl>
-              <p className="text-center text-xs leading-relaxed text-slate-500">
-                Otázky a vysvětlení připraví na serveru Google Gemini podle tohoto nastavení. Klíč k API
-                není v prohlížeči, drží ho nasazení (např. proměnné prostředí na Vercelu).
-                {import.meta.env.VITE_QUIZ_MEDIA !== '0' &&
-                  ' Ilustrace doplní server z veřejných zdrojů (Wikimedia, volitelně Pexels), bez druhého běhu AI u klienta.'}
-              </p>
-            </div>
+            </fieldset>
+          )}
+
+          {step === 4 && (
+            <SummaryStep
+              onEditWizardStep={(s) => setStep(s)}
+              onGenerate={handleCreate}
+            />
           )}
         </motion.div>
       </AnimatePresence>
 
-      <nav
-        className={`mt-8 flex items-center gap-3 ${
-          step < TOTAL_STEPS ? 'justify-between' : 'justify-start'
-        }`}
-        aria-label="Kroky průvodce"
-      >
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.98 }}
-          onClick={goBack}
-          disabled={step === 1}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800/60 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700/80 disabled:pointer-events-none disabled:opacity-40"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Zpět
-        </motion.button>
-        {step < TOTAL_STEPS ? (
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.98 }}
-            onClick={goNext}
-            disabled={step === 3 && !canProceedFromThemeStep}
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-400 disabled:pointer-events-none disabled:opacity-40"
-          >
-            Další krok
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </motion.button>
-        ) : null}
-      </nav>
-
-      {step === TOTAL_STEPS && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="mt-6"
+      {step !== 4 ? (
+        <nav
+          className={`mt-8 flex items-center gap-3 ${
+            step < TOTAL_STEPS ? 'justify-between' : 'justify-start'
+          }`}
+          aria-label="Kroky průvodce"
         >
           <motion.button
             type="button"
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleCreate}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-500 px-5 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-500/25 transition-colors hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300"
+            onClick={goBack}
+            disabled={step === 1}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800/60 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700/80 disabled:pointer-events-none disabled:opacity-40"
           >
-            <Sparkles className="h-5 w-5" aria-hidden />
-            Vytvořit kvíz
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Zpět
           </motion.button>
-        </motion.div>
-      )}
+          {step < TOTAL_STEPS ? (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={goNext}
+              disabled={
+                (step === 1 && !canProceedFromStep1) ||
+                (step === 3 && !canProceedFromThemeStep)
+              }
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-400 disabled:pointer-events-none disabled:opacity-40"
+            >
+              Další krok
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </motion.button>
+          ) : null}
+        </nav>
+      ) : null}
     </div>
   )
 }

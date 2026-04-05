@@ -5,6 +5,7 @@ import type {
   QuizLength,
   TargetGroup,
 } from '../types'
+import { clampCompetitiveTimeLimitSeconds } from './competitiveScoring'
 import {
   ALL_QUIZ_THEMES,
   normalizeIncomingThemeString,
@@ -119,12 +120,39 @@ export function parseQuizConfigurationBody(raw: unknown): QuizConfiguration {
 
   const handicaps = normalizeHandicapsFromApi(strings)
 
+  const tg = targetGroup as TargetGroup
+  let cat = category as QuizCategory
+  if (tg === 'kids' && cat === 'competitive') {
+    cat = 'knowledge'
+  }
+
+  let competitiveTimeLimitSeconds: number | undefined
+  if (
+    cat === 'competitive' &&
+    Object.prototype.hasOwnProperty.call(o, 'competitiveTimeLimitSeconds')
+  ) {
+    const raw = o.competitiveTimeLimitSeconds
+    if (raw != null) {
+      if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+        throw new Error('Neplatný časový limit (očekávám číslo).')
+      }
+      const n = Math.round(raw)
+      if (n < 5 || n > 60) {
+        throw new Error('Časový limit musí být mezi 5 a 60 sekundami.')
+      }
+      competitiveTimeLimitSeconds = clampCompetitiveTimeLimitSeconds(n, tg)
+    }
+  }
+
   return {
-    targetGroup: targetGroup as TargetGroup,
+    targetGroup: tg,
     handicaps,
-    category: category as QuizCategory,
+    category: cat,
     theme: themeNorm,
     customThemeText,
     quizLength: quizLength as QuizLength,
+    ...(competitiveTimeLimitSeconds !== undefined
+      ? { competitiveTimeLimitSeconds }
+      : {}),
   }
 }

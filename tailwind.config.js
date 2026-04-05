@@ -5,7 +5,13 @@ export default {
     extend: {
       fontFamily: {
         sans: ['DM Sans', 'system-ui', 'sans-serif'],
-        dyslexia: ['Lexend', 'DM Sans', 'system-ui', 'sans-serif'],
+        dyslexia: [
+          'OpenDyslexic',
+          'Lexend',
+          'DM Sans',
+          'system-ui',
+          'sans-serif',
+        ],
       },
       colors: {
         surface: {

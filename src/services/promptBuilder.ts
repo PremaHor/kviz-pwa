@@ -1,21 +1,6 @@
 import type { HandicapType, QuizConfiguration, TargetGroup } from '../types'
-
-const HANDICAP_RULES: Partial<
-  Record<Exclude<HandicapType, 'none'>, string>
-> = {
-  dyslexia:
-    'PRAVIDLO PRO DYSLEXII: Používej výhradně běžná slova a krátké věty. Vyhni se cizím slovům, složitým souvětím, dvojitým záporům a zbytečně těžkému pravopisu u vymyšlených odpovědí.',
-  visual_impairment:
-    'PRAVIDLO PRO ZRAKOVÉ POSTIŽENÍ: Otázky nesmí spoléhat na to, co „vidíš na obrázku“, na barvy jako jediný rozdíl mezi odpověďmi ani na popis vizuálních detailů. Vše musí být srozumitelné pouze z textu (popř. hmat, logika, běžné znalosti).',
-  cognitive_dementia:
-    'PRAVIDLO PRO KOGNITIVNÍ OMEZENÍ A DEMENCI: Jedna jasná informace v otázce, žádné metafory, ironie ani skryté významy. Velmi prostá slova, konkrétní kontext (škola, domov, příroda). Pozitivní tón, krátké otázky bez abstraktních hádanek. Odpovědi musí být zjevně rozlišitelné.',
-  hearing_impairment:
-    'PRAVIDLO PRO NESLYŠÍCÍ: Používej přímý, doslovný jazyk bez metafor a rčení. Absolutně se vyhni otázkám na hudbu, zvuky, hlasy nebo audio vjemy.',
-  autism_spectrum:
-    'PRAVIDLO PRO AUTISMUS: Otázky musí být 100% logické a faktické. Nepoužívej sarkasmus, ironii ani emočně nejednoznačné situace. Odpovědi nesmí být chytáky založené na slovíčkaření.',
-  czech_learners:
-    'PRAVIDLO PRO CIZINCE: Používej jen základní a mezinárodně srozumitelnou slovní zásobu (A2/B1). Zcela se vyhni lokální české popkultuře, českým hercům, večerníčkům a lokálním specifikům.',
-}
+import { getAccessibilityPromptRules } from '@/lib/accessibility/handicapRules'
+import { THEME_LABEL_CS } from '@/lib/themeWizardOptions'
 
 const WEB_INSPIRATION: Record<TargetGroup, string> = {
   kids:
@@ -29,22 +14,21 @@ const WEB_INSPIRATION: Record<TargetGroup, string> = {
 }
 
 function buildHandicapRulesBlock(handicaps: HandicapType[]): string {
-  const lines = handicaps
-    .filter((h): h is Exclude<HandicapType, 'none'> => h !== 'none')
-    .map((h) => HANDICAP_RULES[h])
-    .filter((x): x is string => Boolean(x))
-  return lines.join('\n\n')
+  const ids = handicaps.filter((h) => h !== 'none')
+  if (ids.length === 0) return ''
+  const text = getAccessibilityPromptRules(ids as string[])
+  return text.trim().length > 0 ? text : ''
 }
 
 /**
  * Konkrétní formáty otázek podle cílové skupiny a kategorie (mapování z průvodce).
- * `competitive` má vlastní pravidla u juniorů a dospělých; u dětí jako zábavné; u seniorů v UI není, v promptu se bere jako vědomostní (fallback).
+ * `competitive` u dětí v UI není; u seniorů je klidná obdoba dospělých bez moderních témat.
  */
 function buildQuestionFormatBlock(config: QuizConfiguration): string {
   const { targetGroup, category } = config
 
   if (targetGroup === 'kids') {
-    if (category === 'fun' || category === 'competitive') {
+    if (category === 'fun') {
       return `FORMÁT OTÁZEK: Používej výhradně hádanky ('Kdo jsem?'), logické hry ('Co nepatří do party?') a vtipné absurdní situace (např. zvířata, která dělají lidské věci).`
     }
     if (category === 'educational') {
@@ -83,7 +67,10 @@ function buildQuestionFormatBlock(config: QuizConfiguration): string {
   }
 
   if (targetGroup === 'seniors') {
-    if (category === 'knowledge' || category === 'competitive') {
+    if (category === 'competitive') {
+      return `FORMÁT OTÁZEK: Klidný soutěžní kvíz ve stylu televizní soutěže (bez nátlakových výzev typu „Rychle!“). Věcná náročnost jako u dospělých, ale bez moderních médií a bez memů. Otázky důstojné; délku kola bere časovač v zadání (delší než u juniorů).`
+    }
+    if (category === 'knowledge') {
       return `FORMÁT OTÁZEK: Respektující vědomostní test ve stylu pořadu AZ Kvíz. Zaměř se na 'krystalizovanou inteligenci': československá historie 20. století, zeměpis, klasická literatura a významné osobnosti. Otázky musí být důstojné a bez chytáků.`
     }
     if (category === 'fun') {
@@ -132,7 +119,7 @@ export function buildThemeInstructionBlock(config: QuizConfiguration): string {
 
 ${CUSTOM_THEME_FACTUAL_ADDON_CS}`
   }
-  return `TÉMA: Zaměř se na specifickou oblast: ${config.theme}.`
+  return `TÉMA: Zaměř se na specifickou oblast: ${THEME_LABEL_CS[config.theme]}.`
 }
 
 function buildWebInspirationBlock(config: QuizConfiguration): string {
@@ -176,6 +163,10 @@ function buildPersonaBlock(config: QuizConfiguration): string {
 
   if (targetGroup === 'seniors' && (category === 'knowledge' || category === 'educational')) {
     return `TVOJE ROLE: Moderátor vědomostní soutěže ve stylu klasického TV kvízu. STYL: Zdvořilý, srozumitelný, často téma českých vlastí, přírody, kultury minulých dekád. ZÁKAZ: Moderní anglický slang a náhodné anglicismy.`
+  }
+
+  if (targetGroup === 'seniors' && category === 'competitive') {
+    return `TVOJE ROLE: Moderátor klidné televizní soutěže pro seniory. STYL: Důstojný, bez spěchu v textu otázky, stejná věcná náročnost jako u dospělých, ale bez odkazů na moderní technologie a současnou popkulturu po roce 2000. Žádné agresivní slogany.`
   }
 
   if (targetGroup === 'seniors') {

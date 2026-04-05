@@ -19,6 +19,17 @@ body {
     rgb(15 23 42);
 }
 
+/* Kořen s přístupností (třídy z combineHandicaps) */
+.a11y-cream-root:not(.a11y-high-contrast-root) {
+  background: #fef9f0;
+  color: #1c1917;
+}
+
+.a11y-high-contrast-root {
+  background: #0a0a0a;
+  color: #fafafa;
+}
+
 :focus-visible {
   @apply outline-2 outline-offset-2 outline-indigo-400;
 }
