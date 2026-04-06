@@ -1,5 +1,8 @@
 node_modules
 dist
+
+# Cursor IDE
+.cursor/
 *.local
 .DS_Store
 
